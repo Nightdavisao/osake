@@ -32,7 +32,7 @@ if (currentPlatform === 'linux') {
 app.whenReady().then(async () => {
     const configHelper = new AppConfig(app, {
         currentWebsite: 'music',
-        enableDiscordRPC: true,
+        enableDiscordRPC: false,
         enableMPRIS: true,
         enableLastFm: true
     })
