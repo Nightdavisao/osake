@@ -13,20 +13,46 @@ import { TrackMetadata } from './@types/interfaces';
 import log4js from 'log4js'
 import os from 'node:os'
 
-const logger = log4js.getLogger('amwrapper-main')
-logger.level = 'debug'
+const logger = log4js.getLogger('main')
+logger.level = '--debug' in process.argv ? 'debug' : 'warn'
 
 let mainWindow: Electron.BrowserWindow;
 let amWebContents: Electron.WebContents;
 const currentPlatform = os.platform()
 logger.debug('current operating system:', currentPlatform)
 
+// https://wiki.cachyos.org/configuration/enabling_hardware_acceleration_in_google_chrome/
+const CMD_LINE_FLAGS = [
+    'ignore-gpu-blocklist',
+    'ignore-gpu-rasterization',
+    'enable-zero-copy',
+    ['use-gl', 'angle'],
+    ['use-angle', 'vulkan'],
+    [
+        'enable-feature',
+        'UseOzonePlatform,WaylandWindowDecorations,VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo,Vulkan,VulkanFromANGLE,DefaultANGLEVulkan',
+    ],
+    [
+        'disable-features',
+        'MediaSessionService'
+    ]
+]
+
 if (currentPlatform === 'linux') {
-    app.commandLine.appendSwitch(
-        'enable-features',
-        'UseOzonePlatform,WaylandWindowDecorations',
-    );
-    app.commandLine.appendSwitch('disable-features', 'MediaSessionService');
+    for (const flagArgument of CMD_LINE_FLAGS) {
+        switch (typeof flagArgument) {
+            case 'string':
+                app.commandLine.appendArgument(flagArgument)
+                logger.debug("adding argument", flagArgument)
+                break
+            default:
+                if (Array.isArray(flagArgument)) app.commandLine.appendSwitch(flagArgument[0], flagArgument[1])
+                logger.debug("adding cmd switch", flagArgument)
+                break
+        }
+    }
+} else {
+    logger.warn("running on an unsupported platform! you are on your own. playback might not work at all due to VMP if you're on macOS or Windows.")
 }
 
 app.whenReady().then(async () => {
@@ -78,7 +104,7 @@ app.whenReady().then(async () => {
     }
 
     let isQuitting = false
-    
+
     logger.info("awaiting components to be ready")
     await components.whenReady()
     const resourcesPath = process.env.NODE_ENV === 'dev' ?
@@ -98,30 +124,28 @@ app.whenReady().then(async () => {
             plugins: true,
             webviewTag: true
         },
-        //darkTheme: true,
-        //show: false
     }
+    // todo: also save maximized state...?
     Object.assign(options, configHelper.get('winBounds'))
     mainWindow = new BrowserWindow(options);
-    
-    // nativeTheme.themeSource = 'dark'
+
     mainWindow.setTitle(DEFAULT_TITLE)
 
     function loadLastFmIntegration(player: Player) {
         if (!configHelper.get('enableLastFm')) return
-        
+
         const lastFmSession = configHelper.get('lastFmSession')
 
         if (typeof lastFmSession === 'object' && Object.prototype.hasOwnProperty.call(lastFmSession, "token")) {
             const token = lastFmSession['token']
-          
+
             if (!player.hasIntegration("lastfm")) {
                 const newInstance = new LastFMIntegration(player, currentWebsite, lastFmClient)
                 newInstance.setSession(token)
                 player.addIntegration(newInstance)
                 return
             }
-            
+
             const instance = player.getIntegration<LastFMIntegration>("lastfm")
             instance.setSession(token)
             player.enableIntegration("lastfm")
@@ -618,7 +642,7 @@ app.whenReady().then(async () => {
             }
             buildMenus(player, lastFmIntegration)
         })
-        
+
         player.on('lfm:invalidsession', async () => {
             if (lastFmIntegration) {
                 logger.info("disabling last.fm integration and removing session")
