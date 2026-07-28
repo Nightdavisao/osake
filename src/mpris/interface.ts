@@ -15,11 +15,9 @@ export class MediaPlayer2Interface extends dbus.interface.Interface {
     private _supportedUriSchemes: string[]
     private _supportedMimeTypes: string[]
 
-
     constructor(service: MPRISService) {
         super('org.mpris.MediaPlayer2')
         this.service = service
-        // Inicialização dos campos MediaPlayer2
         this._canQuit = true
         this._canRaise = true
         this._fullscreen = false
@@ -49,7 +47,6 @@ export class MediaPlayer2Interface extends dbus.interface.Interface {
         })
     }
 
-    // Getters e Setters para MediaPlayer2
     get CanQuit(): boolean {
         return this._canQuit
     }
