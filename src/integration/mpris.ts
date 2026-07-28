@@ -58,7 +58,6 @@ export class MPRISIntegration implements PlayerIntegration {
         this.player.on(
             "nowPlaying",
             async (metadata: TrackMetadata) => {
-                if (this.player.metadata) metadata = this.player.metadata;
                 if (Object.keys(metadata).length === 0) {
                     this.mpris.setMetadata({});
                     this.mpris.setPlaybackStatus(PlaybackStatus.Stopped);
