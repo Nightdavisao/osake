@@ -19,6 +19,10 @@ export interface PlayParams {
     reportingId: string;
 }
 
+export interface ExtendedTrackMetadata extends TrackMetadata {
+    albumArtist: string;
+}
+
 export interface TrackMetadata {
     albumName: string;
     discNumber: number;

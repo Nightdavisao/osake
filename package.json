@@ -47,7 +47,9 @@
   "dependencies": {
     "@xhayper/discord-rpc": "^1.3.0",
     "dbus-next": "github:Nightdavisao/node-dbus-next",
-    "log4js": "^6.9.1"
+    "log4js": "^6.9.1",
+    "tmp": "^0.2.7",
+    "tmp-promise": "^3.0.3"
   },
   "allowScripts": {
     "github:castlabs/electron-releases#3d2c050af10edc7913c5cbbe03c2ab04267eeadb": true,

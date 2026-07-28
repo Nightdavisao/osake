@@ -1,4 +1,6 @@
 import { TrackMetadata } from "./@types/interfaces";
+import { file } from 'tmp-promise'
+import fs from 'fs/promises'
 
 export const AM_BASE_URL = "https://beta.music.apple.com"
 export const AM_CLASSICAL_BASE_URL = "https://classical.music.apple.com"
@@ -68,12 +70,18 @@ export function getArtworkUrl(metadata: TrackMetadata) {
     return null
 }
 
-export async function encodeBase64(url: string) {
-    const res = await fetch(url)
-    const contentType = res.headers.get("content-type") || "image/jpeg"
-    const base64 = Buffer.from(await res.arrayBuffer()).toString('base64')
-    return `data:${contentType};base64,${base64}`
+// return the path for the saved buffer
+export async function tmpSaveFile(data: Buffer) {
+    const { path } = await file();
+    try {
+        await fs.writeFile(path, data)
+        return path
+    } catch (e) {
+        console.warn('failed to save tmp file', e)
+    }
+    return null
 }
+
 
 export const secToMicro = (seconds: number) => Math.round(Number(seconds) * 1e6);
 export const microToSec = (microseconds: number) => Number(microseconds) / 1e6;
