@@ -1,22 +1,21 @@
-# Apple Music (am-wrapper)
+# Osake
 
-Unofficial, minimal Electron wrapper for Apple Music (and Apple Music Classical) with quality‑of‑life desktop integrations.
+Unofficial Electron wrapper for Apple Music (and Apple Music Classical) with some quality‑of‑life desktop integrations.
 
 > Not affiliated with or endorsed by Apple Inc. Use at your own risk.
 
-## ✨ Features
+## Features
 
 * Linux **MPRIS** support
 * Discord Rich Presence 
-* Last.fm scrobbling
-* Switch between **Apple Music** and **Apple Music Classical**
+* ~~Last.fm scrobbling~~
+* ~~Switch between **Apple Music** and **Apple Music Classical**~~
 * Tray menu with quick playback + visibility controls
 
 ## Download
-
 Binary releases are published on the [Releases page](https://github.com/Nightdavisao/apple-music-wrapper/releases).
 
-> Only Linux AppImage is provided currently. Feel free to contribute build configs for other platforms.
+> Only Linux AppImage is provided currently.
 
 ## Build from source
 
@@ -26,10 +25,7 @@ Prerequisites: Node.js 18+ (or recent LTS), npm.
 git clone https://github.com/Nightdavisao/apple-music-wrapper.git
 cd apple-music-wrapper
 npm install
-# Development (Wayland hint enabled automatically on Linux)
 npm start
-
-# Produce distribution artifacts (AppImage)
 npm run app:dist
 ```
 
@@ -40,5 +36,3 @@ Artifacts will appear under `dist/` plus the packaged output directory created b
 * Live radio stations currently break the app.
 * Only Linux builds provided right now.
 * No automatic updates.
-* No tests (yet).
-* Classical site artwork / metadata differences minimally handled.
