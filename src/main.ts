@@ -1,668 +1,610 @@
-import { app, shell, dialog, BrowserWindow, components, Menu, ipcMain, MenuItem, Tray, MenuItemConstructorOptions, webContents } from 'electron';
-import path from 'path'
-import fs from 'fs'
-import { Player } from './player';
-import { MPRISIntegration } from './integration/mpris';
-import { MKPlaybackState, MKRepeatMode, WebsiteType } from './@types/enums';
-import { DiscordIntegration } from './integration/discord';
-import { AppConfig } from './config';
-import { LastFMClient } from './lastfm/client';
-import { AM_BASE_URL, AM_CLASSICAL_BASE_URL, LASTFM_CREDS, parseCookie } from './utils';
-import { LastFMIntegration } from './integration/lastfm';
-import { TrackMetadata } from './@types/interfaces';
-import log4js from 'log4js'
-import os from 'node:os'
+import {
+    app,
+    BrowserWindow,
+    components,
+    Menu,
+    ipcMain,
+    MenuItem,
+    Tray,
+    MenuItemConstructorOptions,
+    protocol,
+    session,
+} from "electron";
+import path from "path";
+import { Player } from "./player";
+import { MPRISIntegration } from "./integration/mpris";
+import { MKPlaybackState, MKRepeatMode, WebsiteType } from "./@types/enums";
+import { DiscordIntegration } from "./integration/discord";
+import { AppConfig } from "./config";
+import {
+    AM_BASE_URL,
+    AM_CLASSICAL_BASE_URL,
+    getAppleGeolocation,
+} from "./utils";
+import { TrackMetadata } from "./@types/interfaces";
+import log4js from "log4js";
+import os from "node:os";
 
-const logger = log4js.getLogger('main')
-logger.level = '--debug' in process.argv ? 'debug' : 'warn'
-
+const logger = log4js.getLogger("main");
+logger.level = "debug";
 let mainWindow: Electron.BrowserWindow;
-let amWebContents: Electron.WebContents;
-const currentPlatform = os.platform()
-logger.debug('current operating system:', currentPlatform)
+const currentPlatform = os.platform();
+logger.debug("current operating system:", currentPlatform);
 
 // https://wiki.cachyos.org/configuration/enabling_hardware_acceleration_in_google_chrome/
 const CMD_LINE_FLAGS = [
-    'ignore-gpu-blocklist',
-    'ignore-gpu-rasterization',
-    'enable-zero-copy',
-    ['use-gl', 'angle'],
-    ['use-angle', 'vulkan'],
+    "ignore-gpu-blocklist",
+    "ignore-gpu-rasterization",
+    "enable-zero-copy",
     [
-        'enable-feature',
-        'UseOzonePlatform,WaylandWindowDecorations,VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo,Vulkan,VulkanFromANGLE,DefaultANGLEVulkan',
+        "enable-feature",
+        "UseOzonePlatform,WaylandWindowDecorations,VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,UseMultiPlaneFormatForHardwareVideo,Vulkan,VulkanFromANGLE,DefaultANGLEVulkan",
     ],
-    [
-        'disable-features',
-        'MediaSessionService'
-    ]
-]
+    ["disable-features", "MediaSessionService"],
+];
 
-if (currentPlatform === 'linux') {
+if (currentPlatform === "linux") {
     for (const flagArgument of CMD_LINE_FLAGS) {
         switch (typeof flagArgument) {
-            case 'string':
-                app.commandLine.appendArgument(flagArgument)
-                logger.debug("adding argument", flagArgument)
-                break
+            case "string":
+                app.commandLine.appendArgument(flagArgument);
+                logger.debug("adding argument", flagArgument);
+                break;
             default:
-                if (Array.isArray(flagArgument)) app.commandLine.appendSwitch(flagArgument[0], flagArgument[1])
-                logger.debug("adding cmd switch", flagArgument)
-                break
+                if (Array.isArray(flagArgument))
+                    app.commandLine.appendSwitch(
+                        flagArgument[0],
+                        flagArgument[1],
+                    );
+                logger.debug("adding cmd switch", flagArgument);
+                break;
         }
     }
 } else {
-    logger.warn("running on an unsupported platform! you are on your own. playback might not work at all due to VMP if you're on macOS or Windows.")
+    logger.warn(
+        "running on an unsupported platform! you are on your own. playback might not work at all due to VMP if you're on macOS or Windows.",
+    );
 }
 
-app.whenReady().then(async () => {
-    const configHelper = new AppConfig(app, {
-        currentWebsite: 'music',
-        enableDiscordRPC: false,
-        enableMPRIS: true,
-        enableLastFm: true
-    })
-    const currentWebsite = configHelper.get('currentWebsite') ?? WebsiteType.Music
-    const DEFAULT_TITLE = currentWebsite === WebsiteType.Music ? 'Apple Music' : 'Apple Music Classical'
-
-    const getIconFilenames = (website: WebsiteType) => {
-        // png used for tray (better compatibility), svg for in-app logo
-        return {
-            trayPng: website === WebsiteType.Music ? 'am-icon.png' : 'am-classical-icon.png',
-            rendererSvg: website === WebsiteType.Music ? 'am-icon.svg' : 'am-classical-icon.svg'
-        }
-    }
-
-    let player: Player;
-    let lastFmIntegration: LastFMIntegration | null = null
-
-    const lastFmClient = new LastFMClient(
-        LASTFM_CREDS.apiKey,
-        LASTFM_CREDS.apiSecret
-    )
-
-    function validateLfmAuthToken(player: Player) {
-        const authToken = configHelper.get('lastFmAuthToken')
-        logger.info('validating last.fm auth token', authToken)
-
-        lastFmClient.validateAuthToken(authToken)
-            .then(data => {
-                configHelper.set('lastFmSession', {
-                    username: data['session']['name'],
-                    subscriber: data['session']['subscriber'],
-                    token: data['session']['key']
-                })
-                configHelper.delete('lastFmAuthToken')
-                loadLastFmIntegration(player)
-
-                return
-            })
-            .catch(error => {
-                logger.debug('failed to retrieve an actual last.fm token', error)
-                configHelper.delete('lastFmAuthToken')
-            })
-    }
-
-    let isQuitting = false
-
-    logger.info("awaiting components to be ready")
-    await components.whenReady()
-    const resourcesPath = process.env.NODE_ENV === 'dev' ?
-        __dirname.split(path.sep).slice(0, -1).join(path.sep)
-        : process.resourcesPath
-
-    const options = {
-        icon: getIconFilenames(currentWebsite).trayPng,
-        width: 800,
-        height: 600,
-        autoHideMenuBar: true,
-        backgroundColor: '#000000',
-        frame: false,
-        webPreferences: {
-            preload: path.join(__dirname, 'preload.js'),
-            nodeIntegration: false,
-            plugins: true,
-            webviewTag: true
+protocol.registerSchemesAsPrivileged([
+    {
+        scheme: "internal",
+        privileges: {
+            standard: true,
+            secure: true,
+            supportFetchAPI: true,
+            bypassCSP: true,
+            corsEnabled: true,
+            stream: true,
         },
-    }
-    // todo: also save maximized state...?
-    Object.assign(options, configHelper.get('winBounds'))
-    mainWindow = new BrowserWindow(options);
+    },
+]);
 
-    mainWindow.setTitle(DEFAULT_TITLE)
+app.whenReady()
+    .then(async () => {
+        const sex = session.defaultSession;
 
-    function loadLastFmIntegration(player: Player) {
-        if (!configHelper.get('enableLastFm')) return
+        sex.protocol.handle("internal", async (details) => {
+            const PREFIXES = [
+                "beta.music.apple.com/assets/",
+                "beta.music.apple.com/includes/",
+            ];
 
-        const lastFmSession = configHelper.get('lastFmSession')
+            let originalUrl = details.url.slice('internal://proxy/'.length)
 
-        if (typeof lastFmSession === 'object' && Object.prototype.hasOwnProperty.call(lastFmSession, "token")) {
-            const token = lastFmSession['token']
-
-            if (!player.hasIntegration("lastfm")) {
-                const newInstance = new LastFMIntegration(player, currentWebsite, lastFmClient)
-                newInstance.setSession(token)
-                player.addIntegration(newInstance)
-                return
-            }
-
-            const instance = player.getIntegration<LastFMIntegration>("lastfm")
-            instance.setSession(token)
-            player.enableIntegration("lastfm")
-        } else {
-            logger.debug('last.fm: tried to load lastfm integration, but the saved session is invalid')
-        }
-    }
-
-    function switchWebsite(website: WebsiteType) {
-        configHelper.set('currentWebsite', website)
-        // restart the app
-        app.relaunch()
-        app.exit()
-    }
-
-
-    const playbackTemplate = (player: Player) => [
-        {
-            id: 'nowPlaying',
-            label: player.metadata?.name ? `${player.metadata.name} - ${player.metadata.artistName}` : 'No music playing',
-            enabled: false
-        },
-        { type: 'separator' },
-        {
-            label: '&Play/Pause',
-            click: () => {
-                player.playPause()
-            }
-        },
-        {
-            label: '&Next',
-            click: () => {
-                player.next()
-            }
-        },
-        {
-            label: 'P&revious',
-            click: () => {
-                player.previous()
-            }
-        },
-        { type: 'separator' },
-        {
-            label: '&Shuffle',
-            type: 'checkbox',
-            checked: player.shuffleMode,
-            click: (menuItem: MenuItem) => {
-                player.setShuffle(menuItem.checked)
-            }
-        },
-        {
-            label: '&Repeat',
-            submenu: [
-                {
-                    label: 'None',
-                    type: 'radio',
-                    checked: player.repeatMode === MKRepeatMode.None,
-                    click: () => {
-                        player.setRepeat(MKRepeatMode.None)
-                    }
-                },
-                {
-                    label: '&Track',
-                    type: 'radio',
-                    checked: player.repeatMode === MKRepeatMode.One,
-                    click: () => {
-                        player.setRepeat(MKRepeatMode.One)
-                    }
-                },
-                {
-                    label: 'A&lbum/Playlist',
-                    type: 'radio',
-                    checked: player.repeatMode === MKRepeatMode.All,
-                    click: () => {
-                        player.setRepeat(MKRepeatMode.All)
-                    }
+            for (const prefix of PREFIXES) {
+                if (originalUrl.indexOf(prefix) !== -1) {
+                    originalUrl =
+                        prefix + originalUrl.slice(prefix.length);
                 }
-            ]
-        }
-    ]
+            }
 
+            if (!originalUrl.startsWith('https://')) {
+                originalUrl = 'https://' + originalUrl
+            }
 
-    const createMenuTemplate = (player: Player, lastFmIntegration: LastFMIntegration | null) => [
-        {
-            id: 'File',
-            label: '&File',
-            submenu: [
-                {
-                    label: "Switch website",
-                    submenu: [
-                        {
-                            label: 'Music',
-                            type: 'checkbox',
-                            checked: currentWebsite === 'music',
-                            click: () => {
-                                switchWebsite(WebsiteType.Music)
-                            }
+            const originalAsset = await fetch(originalUrl, {
+                redirect: "follow",
+            });
+
+            const fileName = originalUrl.split("/").pop();
+            const extension = fileName?.includes(".")
+                ? fileName.split(".").pop()?.toLowerCase()
+                : "";
+            const jsExtensions = ["js", "mjs", "cjs", "es", "es6"];
+            if (extension) {
+                if (!jsExtensions.includes(extension)) {
+                    return originalAsset;
+                }
+            }
+
+            // TODO: implement some sort of code patching framework later
+            // this only stops Apple Music from overriding metadata from uploaded cloud items
+            const firstRegex =
+                /a\s*=\s*await\s+this\.jet\.dispatch\s*\(\s*hbe\(\s*\{[\s\S]*?\}\s*\)\s*\)/;
+            const secondRegex = /(async fetchCatalogId\(\)\{)([^}]*\})/;
+            try {
+                const originalScript = await fetch(originalUrl, {
+                    redirect: "follow",
+                });
+                const result = await originalScript.text();
+
+                if (firstRegex.test(result)) {
+                    logger.info("nooping a segment of a script");
+                    const nooped = result.replace(
+                        firstRegex,
+                        "a={albumName: s.albumName}",
+                    );
+                    return new Response(nooped, {
+                        headers: {
+                            "content-type": "application/javascript",
                         },
-                        {
-                            label: 'Classical',
-                            type: 'checkbox',
-                            checked: currentWebsite === 'classical',
-                            click: () => {
-                                switchWebsite(WebsiteType.Classical)
-                            }
-                        }
-                    ]
-                },
-                {
-                    label: '&Back',
-                    click: () => {
-                        amWebContents.navigationHistory.goBack()
-                    }
-                },
-                {
-                    label: '&Forward',
-                    click: () => {
-                        amWebContents.navigationHistory.goForward()
-                    }
-                },
-                ...(process.env.NODE_ENV === 'dev' ? [
-                    { type: 'separator' },
-                    {
-                        label: 'Reload',
-                        click: () => {
-                            amWebContents.reload()
-                        }
-                    },
-                    {
-                        label: 'Toggle DevTools',
-                        click: () => {
-                            amWebContents.toggleDevTools()
-                        }
-                    }
-                ] : []),
-                { type: 'separator' },
-                {
-                    label: 'Minimize to tray',
-                    click: () => {
-                        mainWindow.hide()
-                        buildTrayMenu(player)
-                    }
-                },
-                {
-                    label: 'Quit',
-                    click: () => {
-                        isQuitting = true
-                        app.quit()
-                    }
+                    });
                 }
-            ]
-        },
-        {
-            id: 'playback',
-            label: '&Playback',
-            submenu: playbackTemplate(player)
-        },
-        {
-            id: 'options',
-            label: '&Options',
-            submenu: [
-                {
-                    label: '&Discord integration',
-                    type: 'checkbox',
-                    checked: configHelper.get('enableDiscordRPC'),
-                    click: (menuItem: MenuItem) => {
-                        configHelper.set('enableDiscordRPC', menuItem.checked)
-                    }
-                },
-                {
-                    label: '&MPRIS integration',
-                    type: 'checkbox',
-                    checked: configHelper.get('enableMPRIS'),
-                    click: (menuItem: MenuItem) => {
-                        configHelper.set('enableMPRIS', menuItem.checked)
-                    }
-                },
-                {
-                    label: "&Last.fm",
-                    submenu: [
-                        {
-                            label: 'Enabled',
-                            type: 'checkbox',
-                            checked: configHelper.get('enableLastFm'),
-                            click: (menuItem: MenuItem) => {
-                                configHelper.set('enableLastFm', menuItem.checked)
-                            }
+                if (secondRegex.test(result)) {
+                    logger.info("nooping a segment of a script (sec)");
+                    const nooped = result.replace(
+                        secondRegex,
+                        "$1if (this.currentItem?.isCloudItem) return;$2",
+                    );
+                    return new Response(nooped, {
+                        headers: {
+                            "content-type": "application/javascript",
                         },
-                        {
-                            type: 'separator'
-                        },
-                        ...(configHelper.get('lastFmSession') ? [
-                            {
-                                label: configHelper.get('lastFmSession')['username'],
-                                enabled: false
-                            },
-                            {
-                                label: configHelper.get('lastFmSession')['subscriber'] === 1 ? 'Last.fm Pro' : 'Normal user',
-                                checked: configHelper.get('lastFmSession')['subscriber'] === 1,
-                                type: 'checkbox',
-                                enabled: false
-                            },
-                            {
-                                type: 'separator'
-                            },
-                            {
-                                label: lastFmIntegration?.wasScrobbled ?
-                                    'Scrobbled'
-                                    : lastFmIntegration?.wasIgnored ? 'Scrobble ignored' :
-                                        player.playbackState === MKPlaybackState.Playing ? 'Scrobbling' : 'Not playing',
-                                type: 'checkbox',
-                                checked: lastFmIntegration?.wasScrobbled,
-                                enabled: false
-                            },
-                            {
-                                type: 'separator'
-                            },
-                            {
-                                label: 'Log &out...',
-                                click: () => {
-                                    configHelper.delete('lastFmAuthToken')
-                                    configHelper.delete('lastFmSession')
-                                }
-                            }
-                        ] : [
-                            {
-                                label: configHelper.get('lastFmAuthToken') ? 'Authenticate...' : 'Log in...',
-                                click: async () => {
-                                    if (!configHelper.get('lastFmAuthToken')) {
-                                        const response = await lastFmClient.requestAuthToken()
-                                        const authToken = response['token']
-                                        configHelper.set('lastFmAuthToken', authToken)
-                                        if (authToken) {
-                                            logger.info('last.fm: successfully retrieved the session token, redirecting user to the authorization page')
-                                            shell.openExternal(`http://www.last.fm/api/auth/?api_key=${LASTFM_CREDS.apiKey}&token=${authToken}`)
-                                        }
-                                    } else {
-                                        validateLfmAuthToken(player)
-                                    }
-                                }
-                            }
-                        ])
-                    ]
+                    });
                 }
-            ]
-        },
-        {
-            id: 'help',
-            label: '&Help',
-            submenu: [
-                {
-                    label: '&About',
-                    click: async () => {
-                        dialog.showMessageBox({
-                            title: 'About',
-                            message: 'am-wrapper',
-                            detail: `A simple wrapper for Apple Music's website with some extra features like MPRIS and Discord RPC.\n\n
-                            Disclaimer: This application is not an official Apple product. It is not endorsed, sponsored, or affiliated with Apple Inc. All trademarks, logos, and intellectual property are the property of their respective owners. Use of this app is at your own risk.\n\n
-                            Version: ${app.getVersion()}`.split('\n').map(line => line.trim()).join('\n'),
+            } catch (err) {
+                logger.error("Failed to fetch/rewrite script", err);
+            }
 
-                            buttons: ['Close']
-                        })
-                    }
-                }
-            ]
+            return originalAsset;
+        });
+
+        sex.webRequest.onBeforeRequest(
+            {
+                urls: [
+                    "https://beta.music.apple.com/assets/index*",
+                    "https://beta.music.apple.com/includes/js-cdn/v3/components/*",
+                ],
+            },
+            (details, callback) => {
+                if (details.resourceType !== "script") return callback({});
+
+                const redir = `internal://proxy/${details.url.slice("https://".length)}`;
+
+                return callback({ redirectURL: redir });
+            },
+        );
+
+        const config = new AppConfig(app, {
+            currentWebsite: "music",
+            enableDiscordRPC: false,
+            enableMPRIS: true,
+        });
+        const currentWebsite =
+            config.get("currentWebsite") ?? WebsiteType.Music;
+        const DEFAULT_TITLE =
+            currentWebsite === WebsiteType.Music
+                ? "Apple Music"
+                : "Apple Music Classical";
+
+        const getIconFilenames = (website: WebsiteType) => {
+            // png used for tray (better compatibility), svg for in-app logo
+            return {
+                trayPng:
+                    website === WebsiteType.Music
+                        ? "am-icon.png"
+                        : "am-classical-icon.png",
+                rendererSvg:
+                    website === WebsiteType.Music
+                        ? "am-icon.svg"
+                        : "am-classical-icon.svg",
+            };
+        };
+
+        let isQuitting = false;
+
+        logger.info("awaiting components to be ready");
+        await components.whenReady();
+
+        const resourcesPath =
+            process.env.NODE_ENV === "dev"
+                ? __dirname.split(path.sep).slice(0, -1).join(path.sep)
+                : process.resourcesPath;
+
+        const options: Electron.BrowserWindowConstructorOptions = {
+            icon: getIconFilenames(currentWebsite).trayPng,
+            width: 800,
+            height: 600,
+            autoHideMenuBar: true,
+            backgroundColor: "#1f1f1f",
+            webPreferences: {
+                preload: path.join(__dirname, "preload.js"),
+                nodeIntegration: false,
+                devTools: true,
+            },
+            titleBarStyle: "hidden",
+            titleBarOverlay: {
+                color: "#1f1f1f",
+            },
+        };
+        // todo: also save maximized state...?
+        Object.assign(options, config.get("winBounds"));
+        mainWindow = new BrowserWindow(options);
+        mainWindow.setTitle(DEFAULT_TITLE);
+        mainWindow.webContents.openDevTools({ mode: "right" });
+        const player = new Player(ipcMain, mainWindow.webContents);
+
+        function switchWebsite(website: WebsiteType) {
+            config.set("currentWebsite", website);
+            // restart the app
+            app.relaunch();
+            app.exit();
         }
-    ] as Electron.MenuItemConstructorOptions[]
 
-    const buildMainWindowMenu = async (player: Player, lastFmIntegration: LastFMIntegration | null) => {
-        const menu = Menu.buildFromTemplate(createMenuTemplate(player, lastFmIntegration))
-        Menu.setApplicationMenu(menu)
-    }
-
-
-    const { trayPng, rendererSvg } = getIconFilenames(currentWebsite)
-    const tray = new Tray(path.join(resourcesPath, 'assets', trayPng))
-    tray.setToolTip(DEFAULT_TITLE)
-    //tray.on('click', () => mainWindow.show()) this crashes the app for me for some reason
-
-    const buildTrayMenu = (player: Player) => {
-        const menu = Menu.buildFromTemplate([
-            ...playbackTemplate(player) as MenuItemConstructorOptions[],
-            { type: 'separator' },
-            mainWindow.isVisible() ? {
-                label: 'Hide',
+        const playbackTemplate = (player: Player) => [
+            {
+                id: "nowPlaying",
+                label: player.metadata?.name
+                    ? `${player.metadata.name} - ${player.metadata.artistName}`
+                    : "No music playing",
+                enabled: false,
+            },
+            { type: "separator" },
+            {
+                label: "&Play/Pause",
                 click: () => {
-                    mainWindow.hide()
-                    buildTrayMenu(player)
-                }
-            } : {
-                label: 'Show',
-                click: () => {
-                    mainWindow.show()
-                    buildTrayMenu(player)
-                }
+                    player.playPause();
+                },
             },
             {
-                label: 'Quit',
+                label: "&Next",
                 click: () => {
-                    isQuitting = true
-                    app.quit()
-                }
+                    player.next();
+                },
+            },
+            {
+                label: "P&revious",
+                click: () => {
+                    player.previous();
+                },
+            },
+            { type: "separator" },
+            {
+                label: "&Shuffle",
+                type: "checkbox",
+                checked: player.shuffleMode,
+                click: (menuItem: MenuItem) => {
+                    player.setShuffle(menuItem.checked);
+                },
+            },
+            {
+                label: "&Repeat",
+                submenu: [
+                    {
+                        label: "None",
+                        type: "radio",
+                        checked: player.repeatMode === MKRepeatMode.None,
+                        click: () => {
+                            player.setRepeat(MKRepeatMode.None);
+                        },
+                    },
+                    {
+                        label: "&Track",
+                        type: "radio",
+                        checked: player.repeatMode === MKRepeatMode.One,
+                        click: () => {
+                            player.setRepeat(MKRepeatMode.One);
+                        },
+                    },
+                    {
+                        label: "A&lbum/Playlist",
+                        type: "radio",
+                        checked: player.repeatMode === MKRepeatMode.All,
+                        click: () => {
+                            player.setRepeat(MKRepeatMode.All);
+                        },
+                    },
+                ],
+            },
+        ];
+
+        const createMenuTemplate = (player: Player) =>
+            [
+                {
+                    id: "File",
+                    label: "&File",
+                    submenu: [
+                        {
+                            label: "Switch website",
+                            submenu: [
+                                {
+                                    label: "Music",
+                                    type: "checkbox",
+                                    checked: currentWebsite === "music",
+                                    click: () => {
+                                        switchWebsite(WebsiteType.Music);
+                                    },
+                                },
+                                {
+                                    label: "Classical",
+                                    type: "checkbox",
+                                    checked: currentWebsite === "classical",
+                                    click: () => {
+                                        switchWebsite(WebsiteType.Classical);
+                                    },
+                                },
+                            ],
+                        },
+                        {
+                            label: "&Back",
+                            click: () => {
+                                mainWindow.webContents.navigationHistory.goBack();
+                            },
+                        },
+                        {
+                            label: "&Forward",
+                            click: () => {
+                                mainWindow.webContents.navigationHistory.goForward();
+                            },
+                        },
+                        ...(process.env.NODE_ENV === "dev"
+                            ? [
+                                  { type: "separator" },
+                                  {
+                                      label: "Reload",
+                                      click: () => {
+                                          mainWindow.webContents.reload();
+                                      },
+                                  },
+                              ]
+                            : []),
+                        { type: "separator" },
+                        {
+                            label: "Minimize to tray",
+                            click: () => {
+                                mainWindow.hide();
+                                buildTrayMenu(player);
+                            },
+                        },
+                        {
+                            label: "Quit",
+                            click: () => {
+                                isQuitting = true;
+                                app.quit();
+                            },
+                        },
+                    ],
+                },
+                {
+                    id: "playback",
+                    label: "&Playback",
+                    submenu: playbackTemplate(player),
+                },
+                {
+                    id: "options",
+                    label: "&Options",
+                    submenu: [
+                        {
+                            label: "&Discord rich presence",
+                            type: "checkbox",
+                            checked: config.get("enableDiscordRPC"),
+                            click: (menuItem: MenuItem) => {
+                                config.set(
+                                    "enableDiscordRPC",
+                                    menuItem.checked,
+                                );
+                            },
+                        },
+                    ],
+                },
+            ] as Electron.MenuItemConstructorOptions[];
+
+        const buildMainWindowMenu = async (player: Player) => {
+            const menu = Menu.buildFromTemplate(createMenuTemplate(player));
+            Menu.setApplicationMenu(menu);
+        };
+
+        const { trayPng } = getIconFilenames(currentWebsite);
+        const tray = new Tray(path.join(resourcesPath, "assets", trayPng));
+        tray.setToolTip(DEFAULT_TITLE);
+        //tray.on('click', () => mainWindow.show()) this crashes the app for me for some reason
+
+        const buildTrayMenu = (player: Player) => {
+            const menu = Menu.buildFromTemplate([
+                ...(playbackTemplate(player) as MenuItemConstructorOptions[]),
+                { type: "separator" },
+                mainWindow.isVisible()
+                    ? {
+                          label: "Hide",
+                          click: () => {
+                              mainWindow.hide();
+                              buildTrayMenu(player);
+                          },
+                      }
+                    : {
+                          label: "Show",
+                          click: () => {
+                              mainWindow.show();
+                              buildTrayMenu(player);
+                          },
+                      },
+                {
+                    label: "Quit",
+                    click: () => {
+                        isQuitting = true;
+                        app.quit();
+                    },
+                },
+            ]);
+            tray.setContextMenu(menu);
+        };
+
+        const buildMenus = (player: Player) => {
+            buildMainWindowMenu(player);
+            buildTrayMenu(player);
+        };
+
+        // this a workaround for the app not closing properly
+        process.on("SIGINT", () => process.exit(0));
+
+        mainWindow.on("page-title-updated", (e) => e.preventDefault());
+
+        mainWindow.on("close", (event) => {
+            if (!isQuitting) {
+                event.preventDefault();
+                mainWindow.hide();
+                buildTrayMenu(player);
+                return false;
+            } else {
+                config.set("winBounds", mainWindow.getBounds());
+                mainWindow.destroy();
+                return true;
             }
-        ])
-        tray.setContextMenu(menu)
-    }
+        });
 
-    const buildMenus = (player: Player, lastFmIntegration: LastFMIntegration | null) => {
-        buildMainWindowMenu(player, lastFmIntegration)
-        buildTrayMenu(player)
-    }
+        const sendNavState = () => {
+            if (!mainWindow.webContents) return;
+            const canGoBack =
+                mainWindow.webContents.navigationHistory?.canGoBack?.() ??
+                false;
+            const canGoForward =
+                mainWindow.webContents.navigationHistory?.canGoForward?.() ??
+                false;
+            mainWindow.webContents.send("nav-state", {
+                back: canGoBack,
+                forward: canGoForward,
+            });
+        };
 
-    // this a workaround for the app not closing properly
-    process.on('SIGINT', () => process.exit(0))
-
-    mainWindow.on('page-title-updated', e => e.preventDefault())
-
-    mainWindow.on('close', (event) => {
-        if (!isQuitting) {
-            event.preventDefault()
-            mainWindow.hide()
-            buildTrayMenu(player)
-            return false
-        } else {
-            configHelper.set('winBounds', mainWindow.getBounds())
-            mainWindow.destroy()
-            return true
-        }
-    })
-
-    ipcMain.on('open-menu', () => {
-        const menu = Menu.buildFromTemplate(createMenuTemplate(player, lastFmIntegration))
-        menu.popup({ window: mainWindow })
-    })
-
-    const sendNavState = () => {
-        if (!amWebContents) return
-        const canGoBack = amWebContents.navigationHistory?.canGoBack?.() ?? false
-        const canGoForward = amWebContents.navigationHistory?.canGoForward?.() ?? false
-        mainWindow.webContents.send('nav-state', { back: canGoBack, forward: canGoForward })
-    }
-
-    ipcMain.on('nav', (_event, action: string) => {
-        if (!amWebContents) return
-        switch (action) {
-            case 'back':
-                if (amWebContents.navigationHistory.canGoBack()) {
-                    amWebContents.navigationHistory.goBack()
-                }
-                break
-            case 'forward':
-                if (amWebContents.navigationHistory.canGoForward()) {
-                    amWebContents.navigationHistory.goForward()
-                }
-                break
-        }
-        setTimeout(sendNavState, 50)
-    })
-
-    ipcMain.on('window', (_event, action: string) => {
-        switch (action) {
-            case 'minimize':
-                mainWindow.minimize()
-                break
-            case 'maximize':
-                if (mainWindow.isMaximized()) {
-                    mainWindow.unmaximize()
-                } else {
-                    mainWindow.maximize()
-                }
-                break
-            case 'close':
-                app.quit()
-                break
-        }
-    })
-
-    //mainWindow.on('ready-to-show', () => mainWindow.show())
-
-    try {
-        if (!configHelper.get('storefrontId')) {
-            const amResponse = await fetch(AM_BASE_URL)
-            const setCookieResponse = amResponse.headers.get('Set-Cookie')
-            if (setCookieResponse) {
-                const cookie = parseCookie(setCookieResponse)
-                const guessedGeo = cookie['geo']
-
-                if (guessedGeo) {
-                    logger.info(`guessed user location is ${guessedGeo}`)
-                    configHelper.set('storefrontId', guessedGeo)
-                }
+        ipcMain.on("nav", (_event, action: string) => {
+            if (!mainWindow.webContents) return;
+            switch (action) {
+                case "back":
+                    if (mainWindow.webContents.navigationHistory.canGoBack()) {
+                        mainWindow.webContents.navigationHistory.goBack();
+                    }
+                    break;
+                case "forward":
+                    if (
+                        mainWindow.webContents.navigationHistory.canGoForward()
+                    ) {
+                        mainWindow.webContents.navigationHistory.goForward();
+                    }
+                    break;
             }
-        }
-    } catch (e) {
-        logger.debug('failed to guess user location for setting the correct storefront.', e)
-    }
+            setTimeout(sendNavState, 50);
+        });
 
-    const guessedGeo = configHelper.get('storefrontId')
-    const currentWebsiteURL = configHelper.get('currentWebsite') === "music" ? AM_BASE_URL : AM_CLASSICAL_BASE_URL
-    logger.debug(`current geolocation: ${guessedGeo}, current website: ${currentWebsiteURL}`)
-
-    let amUrl = currentWebsiteURL
-    if (guessedGeo && typeof guessedGeo === 'string') {
-        amUrl = `${currentWebsiteURL}/${guessedGeo.toLowerCase()}`
-    }
-
-    mainWindow.loadFile(path.join(resourcesPath, 'assets', 'index.html'))
-    mainWindow.webContents.once('did-finish-load', () => {
-        mainWindow.webContents.send('init', {
-            url: amUrl,
-            preload: path.join(__dirname, 'preload.js'),
-            icon: rendererSvg
-        })
-    })
-
-    ipcMain.once('webview-ready', (_event, id: number) => {
-        logger.debug("webview is ready")
-        amWebContents = webContents.fromId(id)!
-
-        player = new Player(ipcMain, amWebContents)
-        if (configHelper.get('enableMPRIS') && currentPlatform === 'linux') {
-            player.addIntegration(new MPRISIntegration(player))
-        }
-
-        if (configHelper.get('enableDiscordRPC')) {
-            player.addIntegration(new DiscordIntegration(player, currentWebsite))
-        }
-
-        lastFmIntegration = loadLastFmIntegration(player) ?? null
-
-        player.initialize()
-
-        function loadScripts(filenames: Array<string>, stage: string) {
-            filenames.forEach(async scriptFileName => {
-                logger.info(`${stage}: loading ${scriptFileName}`)
-                try {
-                    await amWebContents.executeJavaScript(
-                        fs.readFileSync(
-                            path.join(resourcesPath, 'assets', 'userscripts', scriptFileName)
-                        ).toString()
-                    )
-                } catch (e) {
-                    logger.debug(`failed to load script ${scriptFileName}`, e)
-                }
-            })
-        }
-
-        amWebContents.on('did-finish-load', () => loadScripts(['musicKitHook.js', 'styleFix.js'], 'post-load'))
-        amWebContents.on('did-finish-load', () => sendNavState())
-        amWebContents.on('did-navigate-in-page', () => sendNavState())
-        amWebContents.on('did-navigate', () => sendNavState())
-
-        amWebContents.on('before-input-event', (event, input) => {
-            if (input.alt && input.key === 'ArrowLeft') {
-                amWebContents.navigationHistory.goBack()
-                return
+        ipcMain.on("window", (_event, action: string) => {
+            switch (action) {
+                case "minimize":
+                    mainWindow.minimize();
+                    break;
+                case "maximize":
+                    if (mainWindow.isMaximized()) {
+                        mainWindow.unmaximize();
+                    } else {
+                        mainWindow.maximize();
+                    }
+                    break;
+                case "close":
+                    app.quit();
+                    break;
             }
-            if (input.alt && input.key === 'ArrowRight') {
-                amWebContents.navigationHistory.goForward()
-                return
+        });
+
+        //mainWindow.on('ready-to-show', () => mainWindow.show())
+
+        const currentWebsiteURL =
+            config.get("currentWebsite") === "music"
+                ? AM_BASE_URL
+                : AM_CLASSICAL_BASE_URL;
+
+        const geo = await getAppleGeolocation(config);
+
+        let amUrl = currentWebsiteURL;
+        if (geo && typeof geo === "string") {
+            amUrl = `${currentWebsiteURL}/${geo.toLowerCase()}`;
+        }
+        mainWindow.loadURL(amUrl);
+
+        if (config.get("enableMPRIS") && currentPlatform === "linux") {
+            player.addIntegration(new MPRISIntegration(player));
+        }
+
+        if (config.get("enableDiscordRPC")) {
+            player.addIntegration(
+                new DiscordIntegration(player, currentWebsite),
+            );
+        }
+
+        player.initialize();
+        //mainWindow.webContents.openDevTools();
+
+        mainWindow.webContents.on("did-finish-load", () => sendNavState());
+        mainWindow.webContents.on("did-navigate-in-page", () => sendNavState());
+        mainWindow.webContents.on("did-navigate", () => sendNavState());
+
+        mainWindow.webContents.on("before-input-event", (event, input) => {
+            if (input.alt && input.key === "ArrowLeft") {
+                mainWindow.webContents.navigationHistory.goBack();
+                return;
+            }
+            if (input.alt && input.key === "ArrowRight") {
+                mainWindow.webContents.navigationHistory.goForward();
+                return;
             }
 
-            if (input.alt && input.shift && input.key.toLowerCase() === 'i') {
-                amWebContents.openDevTools()
-                return
+            if (input.alt && input.shift && input.key.toLowerCase() === "i") {
+                mainWindow.webContents.openDevTools();
+                return;
             }
-        })
+        });
 
-        amWebContents.setWindowOpenHandler(() => {
-            return { action: 'deny' }
-        })
+        mainWindow.webContents.setWindowOpenHandler(() => {
+            return { action: "deny" };
+        });
 
-        player.on('nowPlaying', (metadata: TrackMetadata) => {
+        player.on("nowPlaying", (metadata: TrackMetadata) => {
             if (metadata) {
-                mainWindow.setTitle(`${metadata.name} - ${metadata.artistName} — ${DEFAULT_TITLE}`)
+                mainWindow.setTitle(
+                    `${metadata.name} - ${metadata.artistName} — ${DEFAULT_TITLE}`,
+                );
             }
-            buildMenus(player, lastFmIntegration)
-        })
-        player.on('playbackState', ({ state }) => {
+            buildMenus(player);
+        });
+        player.on("playbackState", ({ state }) => {
             if (player.metadata) {
                 switch (state) {
                     case MKPlaybackState.Paused:
-                        mainWindow.setTitle(`⏸ ${player.metadata?.name} - ${player.metadata?.artistName} — ${DEFAULT_TITLE}`)
-                        break
+                        mainWindow.setTitle(
+                            `⏸ ${player.metadata?.name} - ${player.metadata?.artistName} — ${DEFAULT_TITLE}`,
+                        );
+                        break;
                     case MKPlaybackState.Playing:
-                        mainWindow.setTitle(`▶ ${player.metadata?.name} - ${player.metadata?.artistName} — ${DEFAULT_TITLE}`)
-                        break
+                        mainWindow.setTitle(
+                            `▶ ${player.metadata?.name} - ${player.metadata?.artistName} — ${DEFAULT_TITLE}`,
+                        );
+                        break;
                     default:
-                        mainWindow.setTitle(DEFAULT_TITLE)
-                        break
+                        mainWindow.setTitle(DEFAULT_TITLE);
+                        break;
                 }
             } else {
-                mainWindow.setTitle(DEFAULT_TITLE)
+                mainWindow.setTitle(DEFAULT_TITLE);
             }
-            buildMenus(player, lastFmIntegration)
-        })
+            buildMenus(player);
+        });
 
-        player.on('lfm:invalidsession', async () => {
-            if (lastFmIntegration) {
-                logger.info("disabling last.fm integration and removing session")
-                configHelper.delete('lastFmSession')
-                player.disableIntegration("lastfm")
-            }
-            await dialog.showMessageBox({
-                title: "Invalid Last.fm session",
-                message: "Your Last.fm session is expired, please log in again through the menus."
-            })
-        })
-        player.on('lfm:scrobble', () => buildMenus(player, lastFmIntegration))
-        player.on('shuffle', () => buildMenus(player, lastFmIntegration))
-        player.on('repeat', () => buildMenus(player, lastFmIntegration))
+        player.on("shuffle", () => buildMenus(player));
+        player.on("repeat", () => buildMenus(player));
 
-        configHelper.on('setKey', () => buildMenus(player, lastFmIntegration))
-        configHelper.on('deletedKey', () => buildMenus(player, lastFmIntegration))
+        config.on("setKey", () => buildMenus(player));
+        config.on("deletedKey", () => buildMenus(player));
 
-        buildMenus(player, lastFmIntegration)
+        buildMenus(player);
+
+        return;
     })
-
-    return
-}).catch(logger.error);
+    .catch(console.error);

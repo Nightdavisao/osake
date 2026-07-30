@@ -1,8 +1,5 @@
 import { MKPlaybackState, MKRepeatMode } from "../@types/enums";
-import {
-    PlayerIntegration,
-    TrackMetadata,
-} from "../@types/interfaces";
+import { PlayerIntegration, TrackMetadata } from "../@types/interfaces";
 import { LoopStatus, PlaybackStatus } from "../mpris/enums";
 import { MPRISService } from "../mpris/service";
 import { Player } from "../player";
@@ -17,7 +14,7 @@ export class MPRISIntegration implements PlayerIntegration {
     player: Player;
     mpris: MPRISService;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mprisMetadata: Record<string, any> = {}
+    mprisMetadata: Record<string, any> = {};
 
     constructor(player: Player) {
         this.logger = log4js.getLogger("mpris-integration");
@@ -55,45 +52,47 @@ export class MPRISIntegration implements PlayerIntegration {
             }
         });
 
-        this.player.on(
-            "nowPlaying",
-            async (metadata: TrackMetadata) => {
-                if (Object.keys(metadata).length === 0) {
-                    this.mpris.setMetadata({});
-                    this.mpris.setPlaybackStatus(PlaybackStatus.Stopped);
-                    return;
-                }
-                this.mprisMetadata = {
-                    "mpris:trackid": "/org/mpris/MediaPlayer2/Track/1",
-                    "mpris:length": metadata.durationInMillis * 1000,
-                    "xesam:title": metadata.name,
-                    "xesam:album": metadata.albumName,
-                    "xesam:artist": [metadata.artistName],
-                    "xesam:trackNumber": metadata.trackNumber,
-                    "xesam:discNumber": metadata.discNumber,
-                };
-                const artworkUrl = getArtworkUrl(metadata)
-                if (artworkUrl) {
-                    const response = await fetch(artworkUrl)
-                    const buffer = await response.arrayBuffer()
-                    
-                    const artworkPath = await tmpSaveFile(Buffer.from(buffer))
-                    if (artworkPath) {
-                        this.mprisMetadata['mpris:artUrl'] = `file://${artworkPath}`
-                    }
-                }
+        this.player.on("nowPlaying", async (metadata: TrackMetadata) => {
+            if (Object.keys(metadata).length === 0) {
+                this.mpris.setMetadata({});
+                this.mpris.setPlaybackStatus(PlaybackStatus.Stopped);
+                return;
+            }
+            this.mprisMetadata = {
+                "mpris:trackid": "/org/mpris/MediaPlayer2/Track/1",
+                "mpris:length": metadata.durationInMillis * 1000,
+                "xesam:title": metadata.name,
+                "xesam:album": metadata.albumName,
+                "xesam:artist": [metadata.artistName],
+                "xesam:trackNumber": metadata.trackNumber,
+                "xesam:discNumber": metadata.discNumber,
+            };
+            const artworkUrl = getArtworkUrl(metadata);
+            if (artworkUrl) {
+                const response = await fetch(artworkUrl);
+                const buffer = await response.arrayBuffer();
 
-                this.mpris.setMetadata(this.mprisMetadata);
+                const artworkPath = await tmpSaveFile(Buffer.from(buffer));
+                if (artworkPath) {
+                    this.mprisMetadata["mpris:artUrl"] =
+                        `file://${artworkPath}`;
+                }
+            }
+
+            this.mpris.setMetadata(this.mprisMetadata);
+        });
+
+        this.player.on(
+            "nowPlayingAlbum",
+            async (albumData: { artistName: string } | null) => {
+                if (albumData && albumData.artistName) {
+                    this.mprisMetadata["xesam:albumArtist"] =
+                        albumData.artistName;
+
+                    this.mpris.setMetadata(this.mprisMetadata);
+                }
             },
         );
-
-        this.player.on('nowPlayingAlbum', async (albumData: { artistName: string } | null) => {
-            if (albumData && albumData.artistName) {
-                this.mprisMetadata["xesam:albumArtist"] = albumData.artistName
-
-                this.mpris.setMetadata(this.mprisMetadata)
-            }
-        })
 
         this.player.on("playbackState", ({ state }) => {
             switch (state) {

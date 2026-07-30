@@ -1,7 +1,7 @@
 export interface PlayerIntegration {
-    shortName: string
-    load(): Promise<void> | void
-    unload(): Promise<void> | void
+    shortName: string;
+    load(): Promise<void> | void;
+    unload(): Promise<void> | void;
 }
 
 export interface Artwork {
@@ -40,7 +40,6 @@ export interface TrackMetadata {
     previews: any[];
     url: string;
 }
-
 
 export interface AppOptions {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
