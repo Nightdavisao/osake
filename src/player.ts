@@ -1,5 +1,5 @@
 import { IpcMain, IpcMainEvent } from "electron";
-import { EventEmitter } from "events";
+import { EventEmitter } from "node:events";
 import { PlayerIntegration, TrackMetadata } from "./@types/interfaces";
 import { MKPlaybackState, MKRepeatMode } from "./@types/enums";
 import { Logger } from "log4js";

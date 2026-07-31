@@ -23,6 +23,7 @@ import { TrackMetadata } from "./@types/interfaces";
 import log4js from "log4js";
 import os from "node:os";
 import { testPatches } from "./patching";
+import { fileURLToPath } from "node:url";
 
 const logger = log4js.getLogger("main");
 logger.level = "debug";
@@ -98,10 +99,9 @@ app.whenReady()
         logger.info("awaiting components to be ready");
         await components.whenReady();
 
-        const resourcesPath =
-            process.env.NODE_ENV === "dev"
-                ? __dirname.split(path.sep).slice(0, -1).join(path.sep)
-                : process.resourcesPath;
+        const resourcesPath = !app.isPackaged
+            ? path.dirname(fileURLToPath(import.meta.url))
+            : process.resourcesPath
 
         const options: Electron.BrowserWindowConstructorOptions = {
             icon: getIconFilenames(currentWebsite).trayPng,
@@ -110,7 +110,9 @@ app.whenReady()
             autoHideMenuBar: true,
             backgroundColor: "#1f1f1f",
             webPreferences: {
-                preload: path.join(__dirname, "preload.js"),
+                preload: fileURLToPath(
+                    new URL("./preload.cjs", import.meta.url),
+                ),
                 nodeIntegration: false,
                 devTools: true,
             },
@@ -154,10 +156,10 @@ app.whenReady()
                     ? Buffer.from(body, "base64").toString()
                     : body;
 
-                const patched = await testPatches(text)
+                const patched = await testPatches(text);
 
                 if (patched.wasModified) {
-                    text = patched.script
+                    text = patched.script;
                 }
 
                 await debug.sendCommand("Fetch.fulfillRequest", {

@@ -2,7 +2,7 @@
 import { App } from "electron/main";
 import { AppOptions } from "./@types/interfaces";
 import fs from "fs";
-import { EventEmitter } from "stream";
+import { EventEmitter } from "node:events";
 import { Logger } from "log4js";
 import log4js from "log4js";
 

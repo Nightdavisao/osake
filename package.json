@@ -1,13 +1,13 @@
 {
   "name": "am-wrapper",
-  "version": "0.0.4-hotfix",
+  "version": "0.0.5",
   "description": "",
   "main": "dist/main.js",
   "scripts": {
-    "start": "npx tsc && cross-env NODE_ENV=dev ELECTRON_OZONE_PLATFORM_HINT=wayland electron . --no-sandbox",
-    "build": "npx tsc",
+    "start": "npx tsc -noEmit && node esbuild.js && electron . --no-sandbox",
+    "build": "npx tsc -noEmit && node esbuild.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "app:dist": "npx tsc && electron-builder"
+    "app:dist": "npx tsc -noEmit && node esbuild.js && electron-builder"
   },
   "build": {
     "productName": "Apple Music",
@@ -16,7 +16,7 @@
     "appId": "io.nightdavisao.amwrapper",
     "linux": {
       "target": "AppImage",
-      "icon": "assets/am-icon.png",
+      "icon": "src/assets/am-icon.png",
       "category": "AudioVideo"
     },
     "extraResources": [
@@ -30,14 +30,15 @@
     }
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
+  "author": "Nightdavisao",
+  "license": "MIT",
+  "type": "module",
   "devDependencies": {
     "@eslint/js": "^9.25.1",
     "cross-env": "^10.1.0",
     "electron": "git+https://github.com/castlabs/electron-releases.git#v44.0.0-alpha.1+wvcus",
     "electron-builder": "^26.0.19",
+    "esbuild": "0.28.1",
     "eslint": "^9.33.0",
     "eslint-plugin-promise": "^7.2.1",
     "globals": "^16.3.0",
@@ -55,6 +56,7 @@
     "github:castlabs/electron-releases#3d2c050af10edc7913c5cbbe03c2ab04267eeadb": true,
     "electron-winstaller@5.4.0": true,
     "github:castlabs/electron-releases#f466da09e341c26efe6e72e32372f4d0473846e6": true,
-    "github:castlabs/electron-releases#b302a7fd234c9f3607db2307a2b6e8d8b87bd3ed": true
+    "github:castlabs/electron-releases#b302a7fd234c9f3607db2307a2b6e8d8b87bd3ed": true,
+    "esbuild@0.28.1": true
   }
 }
