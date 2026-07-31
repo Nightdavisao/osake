@@ -7,8 +7,6 @@ import {
     MenuItem,
     Tray,
     MenuItemConstructorOptions,
-    protocol,
-    session,
 } from "electron";
 import path from "path";
 import { Player } from "./player";
@@ -24,6 +22,7 @@ import {
 import { TrackMetadata } from "./@types/interfaces";
 import log4js from "log4js";
 import os from "node:os";
+import { testPatches } from "./patching";
 
 const logger = log4js.getLogger("main");
 logger.level = "debug";
@@ -66,116 +65,8 @@ if (currentPlatform === "linux") {
     );
 }
 
-protocol.registerSchemesAsPrivileged([
-    {
-        scheme: "internal",
-        privileges: {
-            standard: true,
-            secure: true,
-            supportFetchAPI: true,
-            bypassCSP: true,
-            corsEnabled: true,
-            stream: true,
-        },
-    },
-]);
-
 app.whenReady()
     .then(async () => {
-        const sex = session.defaultSession;
-
-        sex.protocol.handle("internal", async (details) => {
-            const PREFIXES = [
-                "beta.music.apple.com/assets/",
-                "beta.music.apple.com/includes/",
-            ];
-
-            let originalUrl = details.url.slice('internal://proxy/'.length)
-
-            for (const prefix of PREFIXES) {
-                if (originalUrl.indexOf(prefix) !== -1) {
-                    originalUrl =
-                        prefix + originalUrl.slice(prefix.length);
-                }
-            }
-
-            if (!originalUrl.startsWith('https://')) {
-                originalUrl = 'https://' + originalUrl
-            }
-
-            const originalAsset = await fetch(originalUrl, {
-                redirect: "follow",
-            });
-
-            const fileName = originalUrl.split("/").pop();
-            const extension = fileName?.includes(".")
-                ? fileName.split(".").pop()?.toLowerCase()
-                : "";
-            const jsExtensions = ["js", "mjs", "cjs", "es", "es6"];
-            if (extension) {
-                if (!jsExtensions.includes(extension)) {
-                    return originalAsset;
-                }
-            }
-
-            // TODO: implement some sort of code patching framework later
-            // this only stops Apple Music from overriding metadata from uploaded cloud items
-            const firstRegex =
-                /a\s*=\s*await\s+this\.jet\.dispatch\s*\(\s*hbe\(\s*\{[\s\S]*?\}\s*\)\s*\)/;
-            const secondRegex = /(async fetchCatalogId\(\)\{)([^}]*\})/;
-            try {
-                const originalScript = await fetch(originalUrl, {
-                    redirect: "follow",
-                });
-                const result = await originalScript.text();
-
-                if (firstRegex.test(result)) {
-                    logger.info("nooping a segment of a script");
-                    const nooped = result.replace(
-                        firstRegex,
-                        "a={albumName: s.albumName}",
-                    );
-                    return new Response(nooped, {
-                        headers: {
-                            "content-type": "application/javascript",
-                        },
-                    });
-                }
-                if (secondRegex.test(result)) {
-                    logger.info("nooping a segment of a script (sec)");
-                    const nooped = result.replace(
-                        secondRegex,
-                        "$1if (this.currentItem?.isCloudItem) return;$2",
-                    );
-                    return new Response(nooped, {
-                        headers: {
-                            "content-type": "application/javascript",
-                        },
-                    });
-                }
-            } catch (err) {
-                logger.error("Failed to fetch/rewrite script", err);
-            }
-
-            return originalAsset;
-        });
-
-        sex.webRequest.onBeforeRequest(
-            {
-                urls: [
-                    "https://beta.music.apple.com/assets/index*",
-                    "https://beta.music.apple.com/includes/js-cdn/v3/components/*",
-                ],
-            },
-            (details, callback) => {
-                if (details.resourceType !== "script") return callback({});
-
-                const redir = `internal://proxy/${details.url.slice("https://".length)}`;
-
-                return callback({ redirectURL: redir });
-            },
-        );
-
         const config = new AppConfig(app, {
             currentWebsite: "music",
             enableDiscordRPC: false,
@@ -231,6 +122,56 @@ app.whenReady()
         // todo: also save maximized state...?
         Object.assign(options, config.get("winBounds"));
         mainWindow = new BrowserWindow(options);
+        const debug = mainWindow.webContents.debugger;
+
+        debug.attach("1.3");
+
+        await debug.sendCommand("Fetch.enable", {
+            patterns: [
+                {
+                    urlPattern: `${AM_BASE_URL}/assets/*`,
+                    requestStage: "Response",
+                },
+                {
+                    urlPattern: `${AM_BASE_URL}/includes/js-cdn*`,
+                    requestStage: "Response",
+                },
+            ],
+        });
+
+        debug.on("message", async (_, method, params) => {
+            if (method !== "Fetch.requestPaused") return;
+
+            const { requestId } = params;
+
+            if (params.responseStatusCode) {
+                const { body, base64Encoded } = await debug.sendCommand(
+                    "Fetch.getResponseBody",
+                    { requestId },
+                );
+
+                let text = base64Encoded
+                    ? Buffer.from(body, "base64").toString()
+                    : body;
+
+                const patched = await testPatches(text)
+
+                if (patched.wasModified) {
+                    text = patched.script
+                }
+
+                await debug.sendCommand("Fetch.fulfillRequest", {
+                    requestId,
+                    responseCode: params.responseStatusCode,
+                    responseHeaders: params.responseHeaders,
+                    body: Buffer.from(text).toString("base64"),
+                });
+            } else {
+                await debug.sendCommand("Fetch.continueRequest", {
+                    requestId,
+                });
+            }
+        });
         mainWindow.setTitle(DEFAULT_TITLE);
         mainWindow.webContents.openDevTools({ mode: "right" });
         const player = new Player(ipcMain, mainWindow.webContents);
@@ -540,22 +481,12 @@ app.whenReady()
         }
 
         player.initialize();
-        //mainWindow.webContents.openDevTools();
 
         mainWindow.webContents.on("did-finish-load", () => sendNavState());
         mainWindow.webContents.on("did-navigate-in-page", () => sendNavState());
         mainWindow.webContents.on("did-navigate", () => sendNavState());
 
         mainWindow.webContents.on("before-input-event", (event, input) => {
-            if (input.alt && input.key === "ArrowLeft") {
-                mainWindow.webContents.navigationHistory.goBack();
-                return;
-            }
-            if (input.alt && input.key === "ArrowRight") {
-                mainWindow.webContents.navigationHistory.goForward();
-                return;
-            }
-
             if (input.alt && input.shift && input.key.toLowerCase() === "i") {
                 mainWindow.webContents.openDevTools();
                 return;
@@ -578,13 +509,9 @@ app.whenReady()
             if (player.metadata) {
                 switch (state) {
                     case MKPlaybackState.Paused:
-                        mainWindow.setTitle(
-                            `⏸ ${player.metadata?.name} - ${player.metadata?.artistName} — ${DEFAULT_TITLE}`,
-                        );
-                        break;
                     case MKPlaybackState.Playing:
                         mainWindow.setTitle(
-                            `▶ ${player.metadata?.name} - ${player.metadata?.artistName} — ${DEFAULT_TITLE}`,
+                            `${player.metadata?.name} - ${player.metadata?.artistName} — ${DEFAULT_TITLE}`,
                         );
                         break;
                     default:
@@ -604,7 +531,6 @@ app.whenReady()
         config.on("deletedKey", () => buildMenus(player));
 
         buildMenus(player);
-
         return;
     })
     .catch(console.error);
