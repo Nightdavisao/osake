@@ -22,7 +22,7 @@ import {
 import { TrackMetadata } from "./@types/interfaces";
 import log4js from "log4js";
 import os from "node:os";
-import { testPatches } from "./patching";
+import { testPatches } from "./patcher";
 import { fileURLToPath } from "node:url";
 
 const logger = log4js.getLogger("main");
