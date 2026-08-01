@@ -74,6 +74,29 @@ export function getArtworkUrl(metadata: TrackMetadata) {
     return null;
 }
 
+const FIH_API_KEY = "6d207e02198a847aa98d0a2a901485a5";
+
+export async function uploadToFreeImageHost(buffer: ArrayBufferLike): Promise<{
+    status_code: 200,
+    image: {
+        url: string,
+        nsfw: string
+    }
+}> {
+    const form = new FormData();
+    form.append("key", FIH_API_KEY);
+    form.append("action", "upload");
+    form.append("source", Buffer.from(buffer).toString("base64"));
+    form.append("format", "json");
+
+    const response = await fetch("https://freeimage.host/api/1/upload", {
+        method: "POST",
+        body: form,
+    });
+
+    return response.json();
+}
+
 // return the path for the saved buffer
 export async function tmpSaveFile(data: Buffer) {
     const { path } = await file();
@@ -118,7 +141,7 @@ export async function getAppleGeolocation(config: AppConfig): Promise<string> {
                 }
             }
         } catch (e) {
-            throw new CustomError("", e as Error)
+            throw new CustomError("", e as Error);
         }
     }
 

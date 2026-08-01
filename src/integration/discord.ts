@@ -2,10 +2,13 @@ import { Client } from "@xhayper/discord-rpc";
 import { PlayerSink } from "../player";
 import { TrackMetadata, PlayerIntegration } from "../@types/interfaces";
 import { MKPlaybackState } from "../@types/enums";
-import { secToMillis, getArtworkUrl } from "../utils";
+import { secToMillis, getArtworkUrl, uploadToFreeImageHost } from "../utils";
 import { Logger } from "log4js";
 import log4js from "log4js";
 import { AppState } from "../app/state";
+import SQLiteBackedKV from "../database/kv";
+import { app } from "electron";
+import { xxh64 } from "@node-rs/xxhash";
 
 const INVISIBLE = "\u00A0";
 
@@ -13,12 +16,15 @@ export class DiscordIntegration implements PlayerIntegration {
     shortName: string = "discord";
 
     logger: Logger;
+    kvCache: SQLiteBackedKV<string>;
     playerSink: PlayerSink | null;
     client: Client;
     wasPaused: boolean;
     reconnectTimeout: NodeJS.Timeout | null;
     constructor(state: AppState) {
+        this.kvCache = new SQLiteBackedKV<string>(app, "discordUrlCache.db");
         this.logger = log4js.getLogger("discordIntegration");
+        this.logger.level = "debug";
         this.playerSink = state.playerSink;
         this.client = new Client({
             clientId:
@@ -85,11 +91,57 @@ export class DiscordIntegration implements PlayerIntegration {
 
     async setActivity(metadata: TrackMetadata) {
         if (!this.client.isConnected) return;
-
         this.logger.info("setting Discord activity");
 
-        const artwork = getArtworkUrl(metadata);
-        const artworkUrl = artwork && artwork.length <= 256 ? artwork : "";
+        const originalArtworkUrl = getArtworkUrl(metadata);
+        let artworkUrl = originalArtworkUrl;
+
+        if (originalArtworkUrl && artworkUrl && artworkUrl.length > 256) {
+            try {
+                // remove the AMZ signing params to properly hash
+                const strippedArtworkUrl = originalArtworkUrl.replace(
+                    /\?.+/,
+                    "",
+                );
+
+                const hash = xxh64(Buffer.from(strippedArtworkUrl)).toString(
+                    16,
+                );
+
+                const alreadyCached = this.kvCache.get(hash);
+
+                if (alreadyCached) {
+                    this.logger.info(
+                        "url is already cached",
+                        originalArtworkUrl,
+                        hash,
+                        alreadyCached,
+                    );
+                    artworkUrl = alreadyCached;
+                } else {
+                    const artRes = await fetch(originalArtworkUrl);
+                    const artBuffer = await artRes.arrayBuffer();
+
+                    const uploadedItem = await uploadToFreeImageHost(artBuffer);
+
+                    artworkUrl = uploadedItem.image.url;
+
+                    this.logger.info(
+                        "successfully uploaded artwork to freeimagehost",
+                        originalArtworkUrl,
+                        hash,
+                        uploadedItem,
+                    );
+                    this.kvCache.set(hash, artworkUrl);
+                }
+            } catch (e) {
+                this.logger.warn(
+                    "failed to upload artwork to freeimagehost, the image will possibly be blank on discord",
+                    e,
+                );
+            }
+        }
+
         await this.client.user?.setActivity({
             type: 2, // LISTENING
             details: metadata["name"].padEnd(2, INVISIBLE),
@@ -100,7 +152,7 @@ export class DiscordIntegration implements PlayerIntegration {
                   }
                 : {}),
             state: metadata["artistName"].padEnd(2, INVISIBLE),
-            largeImageKey: artworkUrl,
+            largeImageKey: artworkUrl ? artworkUrl : undefined,
             largeImageText: metadata["albumName"].padEnd(2, INVISIBLE),
             startTimestamp: this.playerSink?.playbackTime
                 ? Date.now() - secToMillis(this.playerSink.playbackTime)

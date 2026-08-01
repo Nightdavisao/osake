@@ -5,6 +5,7 @@ import forwardIconSvg from "./svg/forward.svg";
 import appMenuIconSvg from "./svg/ellipsis.svg";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { h, Fragment } from "jsx-dom";
+import styleFixtures from "./fixtures.css"
 
 import { contextBridge, ipcRenderer } from "electron";
 
@@ -91,6 +92,11 @@ function buildDraggableRegion() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    const styleElement = document.createElement("style")
+    styleElement.type = "text/css"
+    styleElement.innerText = styleFixtures
+    document.head.appendChild(styleElement)
+    
     const observer = new MutationObserver((mutationsList: MutationRecord[]) => {
         for (const mutation of mutationsList) {
             if (mutation.type !== "childList") continue;
@@ -124,28 +130,6 @@ document.addEventListener("DOMContentLoaded", () => {
         childList: true,
         subtree: true,
     });
-});
-
-document.addEventListener("DOMContentLoaded", () => {
-    const style = document.createElement("style");
-    style.type = "text/css";
-    style.innerHTML = `
-        .logo {
-            display: none !important;
-        }
-        button[data-testid="exit-beta"], div[data-testid="native-cta"] {
-            display: none !important;
-        }
-        div[slot="secondary-actions"] {
-            position: fixed;
-            z-index: 2;
-            margin-right: 5px;
-        }
-        div[role="complementary"] > div:first-child {
-            margin-top: env(titlebar-area-height, 0);
-        }
-    `;
-    document.head.appendChild(style);
 });
 
 contextBridge.executeInMainWorld({

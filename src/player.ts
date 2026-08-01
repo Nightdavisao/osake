@@ -6,7 +6,6 @@ import { Logger } from "log4js";
 import log4js from "log4js";
 const { getLogger } = log4js;
 
-
 export class PlayerSink extends EventEmitter {
     ipcMain: IpcMain;
     webContents: Electron.WebContents;

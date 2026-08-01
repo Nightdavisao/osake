@@ -1,0 +1,18 @@
+.logo {
+    display: none !important;
+}
+button[data-testid="exit-beta"],
+div[data-testid="native-cta"] {
+    display: none !important;
+}
+div[slot="secondary-actions"] {
+    position: fixed;
+    z-index: 2;
+    margin-right: 5px;
+}
+div[role="complementary"] > div:first-child {
+    margin-top: env(titlebar-area-height, 0);
+}
+.lyrics-translation-menu {
+    margin-top: env(titlebar-area-height, 0);
+}

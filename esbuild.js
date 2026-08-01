@@ -7,8 +7,9 @@ const common = {
     sourcemap: true,
     external: ["electron", "x11"],
     loader: {
-        '.svg': 'text',
-        '.png': 'dataurl'
+        ".svg": "text",
+        ".png": "dataurl",
+        ".css": "text"
     },
     jsxFactory: "h",
     jsxFragment: "Fragment",
