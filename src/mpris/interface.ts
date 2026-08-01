@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import dbus from "dbus-next";
 import { MPRISService } from "./service";
+import { app } from "electron";
 
 export class MediaPlayer2Interface extends dbus.interface.Interface {
     service: MPRISService;
@@ -24,7 +25,7 @@ export class MediaPlayer2Interface extends dbus.interface.Interface {
         this._canSetFullscreen = false;
         this._hasTrackList = false;
         this._identity = "Apple Music";
-        this._desktopEntry = "amwrapper";
+        this._desktopEntry = app.name;
         this._supportedUriSchemes = [];
         this._supportedMimeTypes = [];
 

@@ -7,6 +7,7 @@ import {
 import { LoopStatus, PlaybackStatus } from "./enums";
 import { Logger } from "log4js";
 import log4js from "log4js";
+import { app } from "electron";
 
 export class MPRISService extends EventEmitter {
     logger: Logger;
@@ -36,7 +37,7 @@ export class MPRISService extends EventEmitter {
 
         try {
             const returnCode = await this.bus.requestName(
-                `org.mpris.MediaPlayer2.amwrapper`,
+                `org.mpris.MediaPlayer2.${app.name}`,
                 dbus.NameFlag.DO_NOT_QUEUE,
             );
             this.logger.debug("return code:", returnCode);

@@ -48,23 +48,84 @@ document.addEventListener("DOMContentLoaded", () => {
                 mutation.addedNodes.forEach((node) => {
                     if (node.nodeType === Node.ELEMENT_NODE) {
                         if (node instanceof Element) {
+                            if (node.classList.contains("navigation__header")) {
+                                const division = document.createElement("div");
+                                division.style.zIndex = "5";
+                                division.style.marginTop = "4px";
+                                division.style.padding = "18px";
+                                division.style.display = "flex";
+                                division.style.gap = "8px";
+
+                                const backButton =
+                                    document.createElement("button");
+                                backButton.style.width = "15px";
+                                backButton.style.height = "15px";
+                                backButton.style.color = "white";
+                                backButton.innerHTML = `
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+                                      <path
+                                        d="M15 4L7 12L15 20"
+                                        stroke="currentColor"
+                                        stroke-width="2.5"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"/>
+                                    </svg>
+                                    `;
+                                backButton.addEventListener("click", () =>
+                                    history.back(),
+                                );
+                                const forwardButton =
+                                    document.createElement("button");
+                                forwardButton.style.width = "15px";
+                                forwardButton.style.height = "15px";
+
+                                forwardButton.style.color = "white";
+                                forwardButton.innerHTML = `
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+                                      <path
+                                        d="M9 4L17 12L9 20"
+                                        stroke="currentColor"
+                                        stroke-width="2.5"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"/>
+                                    </svg>
+                                    `;
+                                backButton.addEventListener("click", () =>
+                                    history.forward(),
+                                );
+
+                                division.appendChild(backButton);
+                                division.appendChild(forwardButton);
+                                node.appendChild(division);
+                            }
+
+                            if (node.nodeName === "MAIN") {
+                                if (node instanceof HTMLElement) {
+                                    node.style.marginTop =
+                                        "env(titlebar-area-height, 0)";
+                                }
+                            }
+
                             if (node.id === "scrollable-page") {
-                                const appDraggableRegion = document.createElement("div");
+                                const appDraggableRegion =
+                                    document.createElement("div");
                                 appDraggableRegion.style.setProperty(
                                     "app-region",
                                     "drag",
                                 );
-                                appDraggableRegion.style.padding = "20px";
+                                appDraggableRegion.style.height =
+                                    "env(titlebar-area-height, 0)";
                                 appDraggableRegion.style.zIndex = "99";
                                 appDraggableRegion.style.position = "fixed";
                                 appDraggableRegion.style.width = "100%";
-                                appDraggableRegion.style.backgroundColor = "#1f1f1f";
+                                // appDraggableRegion.style.backgroundColor = "#1f1f1f";
 
-                                const paddingElem = document.createElement('div')
-                                paddingElem.style.padding = "20px"
+                                const paddingElem =
+                                    document.createElement("div");
+                                paddingElem.style.height =
+                                    "env(titlebar-area-height, 0)";
 
                                 node?.prepend(appDraggableRegion);
-                                node?.prepend(paddingElem)
                             }
                         }
                     }
@@ -83,12 +144,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const style = document.createElement("style");
     style.type = "text/css";
     style.innerHTML = `
+        .logo {
+            display: none !important;
+        }
         button[data-testid="exit-beta"], div[data-testid="native-cta"] {
             display: none !important;
         }
         div[slot="secondary-actions"] {
             position: fixed;
             z-index: 2;
+            margin-right: 5px;
+        }
+        div[role="complementary"] > div:first-child {
+            margin-top: env(titlebar-area-height, 0);
         }
     `;
     document.head.appendChild(style);
@@ -266,7 +334,7 @@ contextBridge.executeInMainWorld({
                 if (prop === "previewOnly") {
                     return false;
                 }
-                
+
                 return Reflect.set(target, prop, value, target);
             },
         };

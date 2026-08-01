@@ -114,10 +114,10 @@ app.whenReady()
                     new URL("./preload.cjs", import.meta.url),
                 ),
                 nodeIntegration: false,
-                devTools: true,
             },
             titleBarStyle: "hidden",
             titleBarOverlay: {
+                symbolColor: "#fff",
                 color: "#1f1f1f",
             },
         };
