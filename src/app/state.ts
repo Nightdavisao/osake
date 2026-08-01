@@ -11,7 +11,7 @@ import { PlayerSink as PlayerSink } from "../player";
 import { MPRISIntegration } from "../integration/mpris";
 import { DiscordIntegration } from "../integration/discord";
 import { MKPlaybackState, WebsiteType } from "../@types/enums";
-import { buildTrayMenu } from "./menu";
+import { buildTrayMenu, setupTray } from "./menu";
 import { DEFAULT_WINDOW_TITLE, getIconFilenames } from "./utils";
 import { interceptFetchResponse } from "./intercept";
 import { TrackMetadata } from "../@types/interfaces";
@@ -68,6 +68,7 @@ export class AppState {
             this.setupPlayerListeners(),
             interceptFetchResponse(this.mainWindow.webContents.debugger),
             this.setupWindowEventListeners(),
+            setupTray(this)
         ];
         try {
             this.logger.info("initializing stuff...");
