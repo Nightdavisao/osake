@@ -26,11 +26,4 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                   name: linux
-                  path: dist/*
-            - name: Create pre-release
-              uses: softprops/action-gh-release@v1
-              with:
-                  tag_name: linux-${{ steps.vars.outputs.sha_short }}
-                  name: Nightly release for Linux ${{ steps.vars.outputs.sha_short }}
-                  prerelease: true
-                  files: release/*
+                  path: release/*
