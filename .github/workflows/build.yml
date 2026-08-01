@@ -1,11 +1,11 @@
-name: Build AppImage
+name: Build for Linux targets
 
 on:
   push:
     branches: ["*"]
 
 jobs:
-  build-appimage:
+  build-linux:
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -16,16 +16,16 @@ jobs:
           node-version: '24'
           cache: 'npm'
       - run: npm ci
-      - run: npm run app:dist -- --linux AppImage
+      - run: npm run app:dist -- --linux
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: appimage
-          path: dist/*.AppImage
+          name: linux
+          path: dist/*
       - name: Create pre-release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: appimage-${{ github.sha }}
-          name: AppImage ${{ github.sha }}
+          tag_name: linux-${GITHUB_SHA::7}
+          name: Nightly release for Linux ${GITHUB_SHA::7}
           prerelease: true
-          files: dist/*.AppImage
+          files: dist/*

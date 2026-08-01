@@ -54,14 +54,14 @@ document.addEventListener("DOMContentLoaded", () => {
                                     "app-region",
                                     "drag",
                                 );
-                                appDraggableRegion.style.padding = "15px";
+                                appDraggableRegion.style.padding = "20px";
                                 appDraggableRegion.style.zIndex = "99";
                                 appDraggableRegion.style.position = "fixed";
                                 appDraggableRegion.style.width = "100%";
                                 appDraggableRegion.style.backgroundColor = "#1f1f1f";
 
                                 const paddingElem = document.createElement('div')
-                                paddingElem.style.padding = "15px"
+                                paddingElem.style.padding = "20px"
 
                                 node?.prepend(appDraggableRegion);
                                 node?.prepend(paddingElem)
