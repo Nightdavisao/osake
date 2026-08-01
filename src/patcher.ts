@@ -7,7 +7,7 @@ const PATCHES = [
     // these only stops Apple Music from overriding metadata from uploaded cloud items
     {
         name: "Prevent metadata linking (if the playing item is a cloud item) on floating player",
-        find: /(!([a-z])\.isRadioStation\)\s*try\s*\{)\s*([a-z])\s*=\s*await\s+(this\.jet\.dispatch\s*\(\s*[a-z]+\(\s*\{[\s\S]*?\}\s*\)\s*);?\)/,
+        find: /(!([a-z])\.isRadioStation\)\s*try\s*\{)\s*([a-z])\s*=\s*(await\s+this\.jet\.dispatch\s*\(\s*[a-z]+\(\s*\{[\s\S]*?\}\s*\)\s*);?\)/,
         replace: "$1$3=$2.isCloudItem?{albumName:$2.albumName}:$4"
     },
     {
