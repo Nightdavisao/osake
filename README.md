@@ -1,4 +1,4 @@
-# Osake「お酒」
+# Osake 「お酒」
 
 Unofficial Electron wrapper for Apple Music (and Apple Music Classical) with some quality‑of‑life desktop integrations.
 
