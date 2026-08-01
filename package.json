@@ -1,8 +1,8 @@
 {
     "name": "osake",
-    "desktopName": "osake-player",
+    "desktopName": "Osake",
     "version": "0.0.5",
-    "description": "",
+    "description": "Unofficial Apple Music web Electron wrapper",
     "main": "dist/main.js",
     "scripts": {
         "start": "npx tsc -noEmit && node esbuild.js && electron . --no-sandbox",
@@ -14,10 +14,10 @@
         "directories": {
             "output": "release"
         },
-        "productName": "osake player",
+        "productName": "Osake",
         "publish": null,
         "icon": "assets/am-icon.png",
-        "appId": "io.nightdavisao.amwrapper",
+        "appId": "io.github.nightdavisao.osake",
         "linux": {
             "target": [
                 "AppImage",
@@ -43,7 +43,7 @@
     },
     "keywords": [],
     "author": "Nightdavisao <nightdavisao@proton.me>",
-    "license": "MIT",
+    "license": "MPL-2.0",
     "type": "module",
     "devDependencies": {
         "@eslint/js": "^9.25.1",
