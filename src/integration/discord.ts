@@ -1,5 +1,5 @@
 import { Client } from "@xhayper/discord-rpc";
-import { Player } from "../player";
+import { PlayerSink } from "../player";
 import { TrackMetadata, PlayerIntegration } from "../@types/interfaces";
 import { MKPlaybackState, WebsiteType } from "../@types/enums";
 import { secToMillis, getArtworkUrl } from "../utils";
@@ -12,17 +12,17 @@ export class DiscordIntegration implements PlayerIntegration {
     shortName: string = "discord";
 
     logger: Logger;
-    player: Player;
+    player: PlayerSink;
     client: Client;
     wasPaused: boolean;
     reconnectTimeout: NodeJS.Timeout | null;
-    constructor(player: Player, activeWebsite: WebsiteType) {
-        this.logger = log4js.getLogger("discord-integration");
+    constructor(player: PlayerSink, activeWebsite: WebsiteType) {
+        this.logger = log4js.getLogger("discordIntegration");
         this.logger.level = "debug";
         this.player = player;
         this.client = new Client({
             clientId:
-                activeWebsite === WebsiteType.Music
+                activeWebsite === 'music'
                     ? "1350945271827136522"
                     : "1406427068320841788",
         });

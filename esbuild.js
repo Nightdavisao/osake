@@ -7,6 +7,10 @@ const common = {
     sourcemap: true,
     packages: "external",
     external: ["electron", "x11"],
+    loader: {
+        '.svg': 'dataurl',
+        '.png': 'dataurl'
+    }
 };
 
 const electron = {

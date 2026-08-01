@@ -6,15 +6,16 @@ import {
     LastFmClientError,
 } from "../lastfm/client";
 import { LastFMScrubbler } from "../lastfm/scrubbler";
-import { Player } from "../player";
+import { PlayerSink } from "../player";
 import { millisToSec, sanitizeName } from "../utils";
 import { Logger } from "log4js";
 import log4js from "log4js";
+
 export class LastFMIntegration implements PlayerIntegration {
     shortName: string = "lastfm";
 
     logger: Logger;
-    player: Player;
+    player: PlayerSink;
     scrubbler: LastFMScrubbler | null;
     currentTrack: {
         albumArtist: string;
@@ -35,14 +36,14 @@ export class LastFMIntegration implements PlayerIntegration {
     activeWebsite: WebsiteType;
     isClassical: boolean;
     constructor(
-        player: Player,
+        player: PlayerSink,
         activeWebsite: WebsiteType,
         client: LastFMClient,
     ) {
-        this.logger = log4js.getLogger("lastfm-integration");
+        this.logger = log4js.getLogger("lastfmIntegration");
         this.logger.level = "debug";
         this.activeWebsite = activeWebsite;
-        this.isClassical = activeWebsite === WebsiteType.Classical;
+        this.isClassical = activeWebsite === 'classical';
         this.player = player;
         this.currentTrack = null;
         this.client = client;

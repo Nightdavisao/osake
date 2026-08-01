@@ -7,13 +7,7 @@ interface AMWrapper {
         send: (channel: string, data: any) => void;
         on: (channel: string, func: (...args: any[]) => void) => void;
     };
-    openBurgerMenu: () => void;
-    // navigation is driven by sending 'nav' events with 'back' | 'forward'
-    window: {
-        minimize: () => void;
-        maximize: () => void;
-        close: () => void;
-    };
+    openAppMenu: () => void;
 }
 
 declare global {
@@ -31,14 +25,7 @@ contextBridge.exposeInMainWorld("AMWrapper", {
             ipcRenderer.on(channel, func);
         },
     },
-    openBurgerMenu: () => {
-        ipcRenderer.send("open-menu");
-    },
-    window: {
-        minimize: () => ipcRenderer.send("window", "minimize"),
-        maximize: () => ipcRenderer.send("window", "maximize"),
-        close: () => ipcRenderer.send("window", "close"),
-    },
+    openAppMenu: () => ipcRenderer.send("open-menu"),
 } as AMWrapper);
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -311,30 +298,10 @@ contextBridge.executeInMainWorld({
 
         const handler = {
             get(target: any, prop: any) {
-                if (prop === "bitrate") {
-                    console.log(
-                        "overriding bitrate to the highest possible (256)",
-                    );
-                    return 256;
-                }
-                if (prop === "previewOnly") {
-                    return false;
-                }
-
                 const value = Reflect.get(target, prop, target);
                 return typeof value === "function" ? value.bind(target) : value;
             },
             set(target: any, prop: any, value: any): any {
-                if (prop === "bitrate") {
-                    console.log(
-                        "overriding bitrate to the highest possible (256)",
-                    );
-                    return 256;
-                }
-                if (prop === "previewOnly") {
-                    return false;
-                }
-
                 return Reflect.set(target, prop, value, target);
             },
         };
@@ -350,6 +317,8 @@ contextBridge.executeInMainWorld({
             return proxy;
         }
 
+        // we are doing this so that we don't need to "win a race" in the first place
+        // preload scripts get loaded before the website itself
         let _musicKit: any;
         Object.defineProperty(window, "MusicKit", {
             configurable: true,
@@ -357,7 +326,8 @@ contextBridge.executeInMainWorld({
                 return _musicKit;
             },
             set(mk) {
-                console.log("called set, proxy");
+                console.log("called set on mk proxy");
+
                 const musicKitObjectHandler = {
                     get(target: any, prop: any) {
                         if (prop === "getInstance") {

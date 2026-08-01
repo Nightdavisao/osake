@@ -15,47 +15,44 @@ export class MPRISService extends EventEmitter {
     bus: dbus.MessageBus | null;
     interface: MediaPlayer2Interface | null;
     playerInterface: MediaPlayer2PlayerInterface | null;
-    //playerEvents: string[]
     constructor() {
         super();
-        this.logger = log4js.getLogger("mpris-service");
+        this.logger = log4js.getLogger("mpris");
         this.logger.level = "debug";
 
         this.initialized = false;
         this.bus = null;
         this.interface = null;
         this.playerInterface = null;
-        this._init();
-        //this.playerEvents = ['play', 'pause', 'previous', 'next', 'playpause', 'stop', 'seek', 'setposition', 'openuri']
+        this.load()
     }
-    private async _init() {
-        this.bus = dbus.sessionBus();
-        this.interface = new MediaPlayer2Interface(this);
-        this.playerInterface = new MediaPlayer2PlayerInterface(this);
+
+    async load() {
+        if (!this.bus) this.bus = dbus.sessionBus();
+        if (!this.interface) this.interface = new MediaPlayer2Interface(this);
+        if (!this.playerInterface) this.playerInterface = new MediaPlayer2PlayerInterface(this);
+
+        if (this.initialized) throw new Error("mpris is already up")
+        
         this.bus.export("/org/mpris/MediaPlayer2", this.interface);
         this.bus.export("/org/mpris/MediaPlayer2", this.playerInterface);
-
-        try {
-            const returnCode = await this.bus.requestName(
-                `org.mpris.MediaPlayer2.${app.name}`,
-                dbus.NameFlag.DO_NOT_QUEUE,
-            );
-            this.logger.debug("return code:", returnCode);
-            if (returnCode != dbus.RequestNameReply.PRIMARY_OWNER) {
-                this.logger.debug("could not acquire D-Bus name");
-            }
-        } catch (e) {
-            console.error("Error acquiring D-Bus name:", e);
+        
+        const returnCode = await this.bus.requestName(
+            `org.mpris.MediaPlayer2.${app.name}`,
+            dbus.NameFlag.DO_NOT_QUEUE,
+        );
+        this.logger.debug("return code:", returnCode);
+        if (returnCode != dbus.RequestNameReply.PRIMARY_OWNER) {
+            this.bus?.disconnect()
+            throw new Error('Failed to acquire D-Bus name')
         }
-
-        process.on("SIGINT", () => {
-            this.logger.debug("disconnecting from dbus");
-            this.initialized = false;
-            this.bus?.disconnect();
-        });
-
-        this.emit("initialized");
         this.initialized = true;
+    }
+
+    unload() {
+        this.logger.debug("disconnecting from dbus");
+        this.initialized = false;
+        this.bus?.disconnect();
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -105,7 +102,6 @@ export class MPRISService extends EventEmitter {
     }
 
     setPosition(position: number) {
-        //this.logger.debug('setting position:', position)
         if (this.initialized && this.playerInterface)
             this.playerInterface.Position = position;
     }

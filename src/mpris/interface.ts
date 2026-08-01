@@ -327,30 +327,30 @@ export class MediaPlayer2PlayerInterface extends dbus.interface.Interface {
     }
 
     Next() {
-        this.service.emit("next");
+        return this.service.emit("next");
     }
     Previous() {
-        this.service.emit("previous");
+        return this.service.emit("previous");
     }
     Pause() {
-        this.service.emit("pause");
+        return this.service.emit("pause");
     }
     PlayPause() {
-        this.service.emit("playpause");
+        return this.service.emit("playpause");
     }
     Stop() {
-        this.service.emit("stop");
+        return this.service.emit("stop");
     }
     Play() {
-        this.service.emit("play");
+        return this.service.emit("play");
     }
     Seek(offset: number) {
-        this.service.emit("seek", offset);
+        return this.service.emit("seek", offset);
     }
     SetPosition(trackId: string, position: number) {
-        this.service.emit("setposition", trackId, position);
+        return this.service.emit("setposition", trackId, position);
     }
     OpenUri(uri: string) {
-        this.service.emit("openuri", uri);
+        return this.service.emit("openuri", uri);
     }
 }

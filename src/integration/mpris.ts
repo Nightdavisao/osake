@@ -2,7 +2,7 @@ import { MKPlaybackState, MKRepeatMode } from "../@types/enums";
 import { PlayerIntegration, TrackMetadata } from "../@types/interfaces";
 import { LoopStatus, PlaybackStatus } from "../mpris/enums";
 import { MPRISService } from "../mpris/service";
-import { Player } from "../player";
+import { PlayerSink } from "../player";
 import { getArtworkUrl, microToSec, secToMicro, tmpSaveFile } from "../utils";
 import { Logger } from "log4js";
 import log4js from "log4js";
@@ -11,13 +11,13 @@ export class MPRISIntegration implements PlayerIntegration {
     shortName: string = "mpris";
 
     logger: Logger;
-    player: Player;
+    player: PlayerSink;
     mpris: MPRISService;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mprisMetadata: Record<string, any> = {};
 
-    constructor(player: Player) {
-        this.logger = log4js.getLogger("mpris-integration");
+    constructor(player: PlayerSink) {
+        this.logger = log4js.getLogger("mprisIntegration");
         this.logger.level = "debug";
         this.player = player;
         this.mpris = new MPRISService();

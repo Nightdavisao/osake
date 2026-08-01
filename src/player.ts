@@ -4,7 +4,10 @@ import { PlayerIntegration, TrackMetadata } from "./@types/interfaces";
 import { MKPlaybackState, MKRepeatMode } from "./@types/enums";
 import { Logger } from "log4js";
 import log4js from "log4js";
-export class Player extends EventEmitter {
+const { getLogger } = log4js;
+
+
+export class PlayerSink extends EventEmitter {
     ipcMain: IpcMain;
     webContents: Electron.WebContents;
     logger: Logger;
@@ -15,9 +18,10 @@ export class Player extends EventEmitter {
     repeatMode: MKRepeatMode;
     playerEvents: string[];
     integrations: Map<string, PlayerIntegration>;
+    
     constructor(ipcMain: IpcMain, webContents: Electron.WebContents) {
         super();
-        this.logger = log4js.getLogger("player-bridge");
+        this.logger = getLogger("playerSink");
         this.ipcMain = ipcMain;
         this.webContents = webContents;
         this.playerEvents = [
