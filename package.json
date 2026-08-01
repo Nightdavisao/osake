@@ -5,10 +5,10 @@
     "description": "Unofficial Apple Music web Electron wrapper",
     "main": "dist/main.js",
     "scripts": {
-        "start": "npx tsc -noEmit && node esbuild.js && electron . --no-sandbox",
-        "build": "npx tsc -noEmit && node esbuild.js",
+        "start": "npx tsc -noEmit && node esbuild.ts && electron . --no-sandbox",
+        "build": "npx tsc -noEmit && node esbuild.ts",
         "test": "echo \"Error: no test specified\" && exit 1",
-        "app:dist": "npx tsc -noEmit && node esbuild.js && electron-builder"
+        "app:dist": "npx tsc -noEmit && node esbuild.ts && electron-builder"
     },
     "build": {
         "directories": {
