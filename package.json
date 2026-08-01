@@ -1,7 +1,7 @@
 {
     "name": "osake",
     "desktopName": "Osake",
-    "version": "0.0.5",
+    "version": "1.0rc",
     "description": "Unofficial Apple Music web Electron wrapper",
     "main": "dist/main.js",
     "scripts": {
