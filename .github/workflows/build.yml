@@ -9,6 +9,8 @@ jobs:
     permissions:
       contents: write
     runs-on: ubuntu-latest
+    env:
+        SHA: ${GITHUB_SHA::7}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,7 +27,7 @@ jobs:
       - name: Create pre-release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: linux-${GITHUB_SHA::7}
-          name: Nightly release for Linux ${GITHUB_SHA::7}
+          tag_name: linux-$SHA
+          name: Nightly release for Linux $SHA
           prerelease: true
           files: dist/*
