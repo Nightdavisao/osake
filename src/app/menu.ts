@@ -1,10 +1,16 @@
-import { Menu, MenuItem, Tray } from "electron";
+import { BrowserWindow, Menu, MenuItem, Tray } from "electron";
 import { MKRepeatMode } from "../@types/enums";
 import { AppState } from "./state";
 import path from "node:path";
-import { DEFAULT_WINDOW_TITLE, getIconFilenames, getResourcesPath } from "./utils";
+import {
+    DEFAULT_WINDOW_TITLE,
+    getIconFilenames,
+    getResourcesPath,
+} from "./utils";
 
-export const playbackTemplate = (state: AppState): Electron.MenuItemConstructorOptions[] => [
+export const playbackTemplate = (
+    state: AppState,
+): Electron.MenuItemConstructorOptions[] => [
     {
         id: "nowPlaying",
         label: state.playerSink?.metadata?.name
@@ -67,77 +73,59 @@ export const playbackTemplate = (state: AppState): Electron.MenuItemConstructorO
     },
 ];
 
-const createMenuTemplate = (state: AppState): Electron.MenuItemConstructorOptions[] =>
-    [
-        {
-            id: "File",
-            label: "&File",
-            submenu: [
-                {
-                    label: "Switch website",
-                    submenu: [
-                        {
-                            label: "Music",
-                            type: "checkbox",
-                            checked: state.currentWebsite === "music",
-                            click: () =>
-                                state.switchWebsite(state.currentWebsite),
-                        },
-                        {
-                            label: "Classical",
-                            type: "checkbox",
-                            checked: state.currentWebsite === "classical",
-                            click: () =>
-                                state.switchWebsite(state.currentWebsite),
-                        },
-                    ],
-                },
-                {
-                    label: "&Back",
-                    click: () =>
-                        state.mainWindow?.webContents.navigationHistory.goBack(),
-                },
-                {
-                    label: "&Forward",
-                    click: () =>
-                        state.mainWindow?.webContents.navigationHistory.goForward(),
-                },
-                { type: "separator" },
-                {
-                    label: "Reload",
-                    click: () => state.mainWindow?.webContents.reload(),
-                },
-
-                { type: "separator" },
-                {
-                    label: "Minimize to tray",
-                    click: () => state.toggleWindow(),
-                },
-                {
-                    label: "Quit",
-                    click: () => state.quitApp(),
-                },
-            ],
+const createMenuTemplate = (
+    state: AppState,
+): Electron.MenuItemConstructorOptions[] => [
+    {
+        label: "Switch website",
+        submenu: [
+            {
+                label: "Music",
+                type: "checkbox",
+                checked: state.currentWebsite === "music",
+                click: () => state.switchWebsite("music"),
+            },
+            {
+                label: "Classical (!!!UNTESTED!!!)",
+                type: "checkbox",
+                checked: state.currentWebsite === "classical",
+                click: () => state.switchWebsite("classical"),
+            },
+        ],
+    },
+    { type: "separator" },
+    { label: "Integrations", enabled: false },
+    {
+        label: "&Discord rich presence",
+        type: "checkbox",
+        checked: state.config?.get("enableDiscordRPC"),
+        click: (menuItem: MenuItem) => {
+            state.config?.set("enableDiscordRPC", menuItem.checked);
         },
-        {
-            id: "options",
-            label: "&Options",
-            submenu: [
-                {
-                    label: "&Discord rich presence",
-                    type: "checkbox",
-                    checked: state.config?.get("enableDiscordRPC"),
-                    click: (menuItem: MenuItem) => {
-                        state.config?.set("enableDiscordRPC", menuItem.checked);
-                    },
-                },
-            ],
-        },
-    ]
+    },
+    { type: "separator" },
+    {
+        label: "Reload",
+        click: () => state.mainWindow?.webContents.reload(),
+    },
+    {
+        label: "Minimize to tray",
+        click: () => state.toggleWindow(),
+    },
+    {
+        label: "Quit",
+        click: () => state.quitApp(),
+    },
+];
 
-const buildMainWindowMenu = async (state: AppState) => {
+export const openAppMenu = (
+    state: AppState,
+    event: Electron.IpcMainInvokeEvent,
+) => {
     const menu = Menu.buildFromTemplate(createMenuTemplate(state));
-    Menu.setApplicationMenu(menu);
+    menu.popup({
+        window: BrowserWindow.fromWebContents(event.sender) ?? undefined,
+    });
 };
 
 export const buildTrayMenu = (state: AppState) => {
@@ -160,6 +148,5 @@ export function setupTray(state: AppState) {
     const { trayPng } = getIconFilenames(state.currentWebsite);
     state.tray = new Tray(path.join(getResourcesPath(), "assets", trayPng));
     state.tray.setToolTip(DEFAULT_WINDOW_TITLE);
-    buildTrayMenu(state)
+    buildTrayMenu(state);
 }
-

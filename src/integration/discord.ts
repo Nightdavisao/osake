@@ -1,10 +1,11 @@
 import { Client } from "@xhayper/discord-rpc";
 import { PlayerSink } from "../player";
 import { TrackMetadata, PlayerIntegration } from "../@types/interfaces";
-import { MKPlaybackState, WebsiteType } from "../@types/enums";
+import { MKPlaybackState } from "../@types/enums";
 import { secToMillis, getArtworkUrl } from "../utils";
 import { Logger } from "log4js";
 import log4js from "log4js";
+import { AppState } from "../app/state";
 
 const INVISIBLE = "\u00A0";
 
@@ -12,17 +13,16 @@ export class DiscordIntegration implements PlayerIntegration {
     shortName: string = "discord";
 
     logger: Logger;
-    player: PlayerSink;
+    playerSink: PlayerSink | null;
     client: Client;
     wasPaused: boolean;
     reconnectTimeout: NodeJS.Timeout | null;
-    constructor(player: PlayerSink, activeWebsite: WebsiteType) {
+    constructor(state: AppState) {
         this.logger = log4js.getLogger("discordIntegration");
-        this.logger.level = "debug";
-        this.player = player;
+        this.playerSink = state.playerSink;
         this.client = new Client({
             clientId:
-                activeWebsite === 'music'
+                state.currentWebsite === "music"
                     ? "1350945271827136522"
                     : "1406427068320841788",
         });
@@ -35,15 +35,15 @@ export class DiscordIntegration implements PlayerIntegration {
             this.logger.info("discord RPC ready");
         });
 
-        this.player.on(
+        this.playerSink?.on(
             "nowPlaying",
             async (metadata: TrackMetadata) => await this.setActivity(metadata),
         );
-        this.player.on("playbackState", async ({ state }) => {
+        this.playerSink?.on("playbackState", async ({ state }) => {
             switch (state) {
                 case MKPlaybackState.Playing:
-                    if (this.player.metadata)
-                        await this.setActivity(this.player.metadata);
+                    if (this.playerSink?.metadata)
+                        await this.setActivity(this.playerSink.metadata);
                     break;
                 case MKPlaybackState.Stopped:
                 case MKPlaybackState.Paused:
@@ -53,9 +53,9 @@ export class DiscordIntegration implements PlayerIntegration {
                     break;
             }
         });
-        this.player.on("playbackTime", async () => {
-            if (this.player.metadata && this.wasPaused) {
-                await this.setActivity(this.player.metadata);
+        this.playerSink?.on("playbackTime", async () => {
+            if (this.playerSink?.metadata && this.wasPaused) {
+                await this.setActivity(this.playerSink.metadata);
                 this.wasPaused = false;
             }
         });
@@ -102,20 +102,20 @@ export class DiscordIntegration implements PlayerIntegration {
             state: metadata["artistName"].padEnd(2, INVISIBLE),
             largeImageKey: artworkUrl,
             largeImageText: metadata["albumName"].padEnd(2, INVISIBLE),
-            startTimestamp: Date.now() - secToMillis(this.player.playbackTime),
-            endTimestamp:
-                Date.now() +
-                (metadata.durationInMillis -
-                    secToMillis(this.player.playbackTime)),
+            startTimestamp: this.playerSink?.playbackTime
+                ? Date.now() - secToMillis(this.playerSink.playbackTime)
+                : undefined,
+            endTimestamp: this.playerSink?.playbackTime
+                ? Date.now() +
+                  (metadata.durationInMillis -
+                      secToMillis(this.playerSink.playbackTime))
+                : undefined,
             instance: false,
             statusDisplayType: 1, // ACTIVITY_STATE
         });
     }
 
     unload() {
-        // todo: properly unload
-        //this.player.off('nowPlaying', this.setActivityBound)
-
         if (this.client.isConnected) {
             this.client.removeAllListeners();
             this.client.destroy();

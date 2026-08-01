@@ -11,7 +11,7 @@ import { PlayerSink as PlayerSink } from "../player";
 import { MPRISIntegration } from "../integration/mpris";
 import { DiscordIntegration } from "../integration/discord";
 import { MKPlaybackState, WebsiteType } from "../@types/enums";
-import { buildTrayMenu, setupTray } from "./menu";
+import { buildTrayMenu, openAppMenu, setupTray } from "./menu";
 import { DEFAULT_WINDOW_TITLE, getIconFilenames } from "./utils";
 import { interceptFetchResponse } from "./intercept";
 import { TrackMetadata } from "../@types/interfaces";
@@ -38,8 +38,8 @@ export class AppState {
             enableDiscordRPC: false,
             enableMPRIS: true,
         });
-        this.currentWebsite = this.config.get("websiteType") ?? "music";
-
+        this.currentWebsite = this.config.get("currentWebsite");
+        this.logger.info("current website is " + this.currentWebsite);
         const options: Electron.BrowserWindowConstructorOptions = {
             icon: getIconFilenames(this.config.get("currentWebsite")).trayPng,
             width: 800,
@@ -52,11 +52,17 @@ export class AppState {
                 ),
                 nodeIntegration: false,
             },
-            titleBarStyle: "hidden",
-            titleBarOverlay: {
-                symbolColor: "#fff",
-                color: "#1f1f1f",
-            },
+            ...(this.currentWebsite === "music"
+                ? { titleBarStyle: "hidden" }
+                : { titleBarStyle: "default" }),
+            ...(this.currentWebsite === "music"
+                ? {
+                      titleBarOverlay: {
+                          symbolColor: "#fff",
+                          color: "#1f1f1f",
+                      },
+                  }
+                : {}),
         };
         Object.assign(options, this.config.get("winBounds"));
 
@@ -68,7 +74,7 @@ export class AppState {
             this.setupPlayerListeners(),
             interceptFetchResponse(this.mainWindow.webContents.debugger),
             this.setupWindowEventListeners(),
-            setupTray(this)
+            setupTray(this),
         ];
         try {
             this.logger.info("initializing stuff...");
@@ -100,6 +106,8 @@ export class AppState {
     }
 
     private setupWindowEventListeners() {
+        ipcMain.handle("openAppMenu", (event) => openAppMenu(this, event));
+
         this.mainWindow?.on("page-title-updated", (e) => e.preventDefault());
         this.mainWindow?.on("close", (event) => {
             if (!this.isQuitting) {
@@ -174,13 +182,13 @@ export class AppState {
         }
 
         if (this.config?.get("enableDiscordRPC")) {
-            this.playerSink?.addIntegration(
-                new DiscordIntegration(this.playerSink, "music"),
-            );
+            this.playerSink?.addIntegration(new DiscordIntegration(this));
         }
     }
 
     switchWebsite(type: WebsiteType) {
+        if (this.currentWebsite === type) return;
+
         this.config?.set("currentWebsite", type);
         app.relaunch();
         app.exit(0);

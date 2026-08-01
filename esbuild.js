@@ -5,24 +5,26 @@ const common = {
     outbase: "src",
     bundle: true,
     sourcemap: true,
-    packages: "external",
     external: ["electron", "x11"],
     loader: {
-        '.svg': 'dataurl',
+        '.svg': 'text',
         '.png': 'dataurl'
-    }
+    },
+    jsxFactory: "h",
+    jsxFragment: "Fragment",
 };
 
 const electron = {
     entryPoints: ["src/main.ts"],
     outdir: "dist",
+    packages: "external",
     format: "esm",
     platform: "node",
     target: "node22",
 };
 
 const preload = {
-    entryPoints: ["src/preload.ts"],
+    entryPoints: ["src/preload.tsx"],
     outfile: "dist/preload.cjs",
     format: "cjs",
     platform: "node",

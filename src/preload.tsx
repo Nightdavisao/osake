@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import backIconSvg from "./svg/back.svg"
+import forwardIconSvg from "./svg/forward.svg";
+import appMenuIconSvg from "./svg/ellipsis.svg";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { h, Fragment } from "jsx-dom";
+
 import { contextBridge, ipcRenderer } from "electron";
 
 interface AMWrapper {
@@ -7,7 +13,6 @@ interface AMWrapper {
         send: (channel: string, data: any) => void;
         on: (channel: string, func: (...args: any[]) => void) => void;
     };
-    openAppMenu: () => void;
 }
 
 declare global {
@@ -16,6 +21,7 @@ declare global {
         MusicKit: any;
     }
 }
+
 contextBridge.exposeInMainWorld("AMWrapper", {
     ipcRenderer: {
         send: (channel: string, data: any) => {
@@ -25,99 +31,92 @@ contextBridge.exposeInMainWorld("AMWrapper", {
             ipcRenderer.on(channel, func);
         },
     },
-    openAppMenu: () => ipcRenderer.send("open-menu"),
 } as AMWrapper);
 
+
+function buildNavHeader() {
+    const iconButtonStyle = { width: "15px", height: "15px", color: "white" };
+
+    return (
+        <div
+            style={{
+                zIndex: "5",
+                alignItems: "center",
+                marginTop: "4px",
+                padding: "18px",
+                display: "flex",
+                gap: "8px",
+            }}
+        >
+            <div
+                style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    flexGrow: "1",
+                }}
+            >
+                <button
+                    style={iconButtonStyle}
+                    innerHTML={backIconSvg}
+                    onClick={() => history.back()}
+                />
+                <button
+                    style={iconButtonStyle}
+                    innerHTML={forwardIconSvg}
+                    onClick={() => history.forward()}
+                />
+            </div>
+            <button
+                style={{ width: "28px", height: "28px", color: "white" }}
+                innerHTML={appMenuIconSvg}
+                onClick={(event: Event) =>
+                    ipcRenderer.invoke("openAppMenu", event)
+                }
+            />
+        </div>
+    );
+}
+
+function buildDraggableRegion() {
+    return (
+        <div
+            style={{
+                height: "env(titlebar-area-height, 0)" as any,
+                position: "fixed",
+                width: "100%",
+            }}
+        />
+    );
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-    const observer = new MutationObserver((mutationsList) => {
+    const observer = new MutationObserver((mutationsList: MutationRecord[]) => {
         for (const mutation of mutationsList) {
-            if (mutation.type === "childList") {
-                mutation.addedNodes.forEach((node) => {
-                    if (node.nodeType === Node.ELEMENT_NODE) {
-                        if (node instanceof Element) {
-                            if (node.classList.contains("navigation__header")) {
-                                const division = document.createElement("div");
-                                division.style.zIndex = "5";
-                                division.style.marginTop = "4px";
-                                division.style.padding = "18px";
-                                division.style.display = "flex";
-                                division.style.gap = "8px";
+            if (mutation.type !== "childList") continue;
 
-                                const backButton =
-                                    document.createElement("button");
-                                backButton.style.width = "15px";
-                                backButton.style.height = "15px";
-                                backButton.style.color = "white";
-                                backButton.innerHTML = `
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
-                                      <path
-                                        d="M15 4L7 12L15 20"
-                                        stroke="currentColor"
-                                        stroke-width="2.5"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"/>
-                                    </svg>
-                                    `;
-                                backButton.addEventListener("click", () =>
-                                    history.back(),
-                                );
-                                const forwardButton =
-                                    document.createElement("button");
-                                forwardButton.style.width = "15px";
-                                forwardButton.style.height = "15px";
+            mutation.addedNodes.forEach((node) => {
+                if (!(node instanceof Element)) return;
 
-                                forwardButton.style.color = "white";
-                                forwardButton.innerHTML = `
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
-                                      <path
-                                        d="M9 4L17 12L9 20"
-                                        stroke="currentColor"
-                                        stroke-width="2.5"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"/>
-                                    </svg>
-                                    `;
-                                backButton.addEventListener("click", () =>
-                                    history.forward(),
-                                );
+                if (node.classList.contains("navigation__header")) {
+                    console.log("adding the nav header to nav header", node)
+                    
+                    node.appendChild(buildNavHeader());
+                }
 
-                                division.appendChild(backButton);
-                                division.appendChild(forwardButton);
-                                node.appendChild(division);
-                            }
-
-                            if (node.nodeName === "MAIN") {
-                                if (node instanceof HTMLElement) {
-                                    node.style.marginTop =
-                                        "env(titlebar-area-height, 0)";
-                                }
-                            }
-
-                            if (node.id === "scrollable-page") {
-                                const appDraggableRegion =
-                                    document.createElement("div");
-                                appDraggableRegion.style.setProperty(
-                                    "app-region",
-                                    "drag",
-                                );
-                                appDraggableRegion.style.height =
-                                    "env(titlebar-area-height, 0)";
-                                appDraggableRegion.style.zIndex = "99";
-                                appDraggableRegion.style.position = "fixed";
-                                appDraggableRegion.style.width = "100%";
-                                // appDraggableRegion.style.backgroundColor = "#1f1f1f";
-
-                                const paddingElem =
-                                    document.createElement("div");
-                                paddingElem.style.height =
-                                    "env(titlebar-area-height, 0)";
-
-                                node?.prepend(appDraggableRegion);
-                            }
-                        }
+                if (!window.location.hostname.includes("classical")) {
+                    if (node.nodeName === "MAIN" && node instanceof HTMLElement) {
+                        node.style.marginTop = "env(titlebar-area-height, 0)";
                     }
-                });
-            }
+    
+                    if (node.id === "scrollable-page") {
+                        const region = buildDraggableRegion();
+                        region.style.setProperty("app-region", "drag");
+                        region.style.zIndex = "99";
+                        node.prepend(region);
+                    }
+                }
+            });
         }
     });
 

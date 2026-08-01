@@ -5,6 +5,7 @@ import fs from "fs";
 import { EventEmitter } from "node:events";
 import { Logger } from "log4js";
 import log4js from "log4js";
+import { join } from 'node:path'
 
 export class AppConfig extends EventEmitter {
     app: App;
@@ -15,10 +16,14 @@ export class AppConfig extends EventEmitter {
     constructor(app: App, defaultOptions: AppOptions) {
         super();
         this.app = app;
-        this.logger = log4js.getLogger("app-config");
+        this.logger = log4js.getLogger("appConfig");
         this.logger.level = "debug";
         this.default = defaultOptions;
         this.current = this._load() || defaultOptions;
+    }
+
+    private getConfigPath() {
+        return join(this.app.getPath("userData"), "config.json")
     }
 
     get(key: string) {
@@ -41,23 +46,19 @@ export class AppConfig extends EventEmitter {
     }
 
     private _save() {
-        const userData = this.app.getPath("userData");
-        const configFile = `${userData}/config.json`;
         try {
-            this.logger.info("saving config file", configFile);
-            fs.writeFileSync(configFile, JSON.stringify(this.current, null, 4));
+            this.logger.info("saving config file", this.getConfigPath());
+            fs.writeFileSync(this.getConfigPath(), JSON.stringify(this.current, null, 4));
         } catch (error) {
             this.logger.error("error saving config file", error);
         }
     }
 
     private _load() {
-        const userData = this.app.getPath("userData");
-        const configFile = `${userData}/config.json`;
-        this.logger.info("loading config file", configFile);
+        this.logger.info("loading config file", this.getConfigPath());
 
         try {
-            const data = fs.readFileSync(configFile, "utf8");
+            const data = fs.readFileSync(this.getConfigPath(), "utf8");
             this.logger.info("config file loaded", data);
 
             return JSON.parse(data);
