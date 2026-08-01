@@ -1,7 +1,7 @@
 import * as fs from "node:fs/promises";
 import * as esbuild from "esbuild";
 
-const common = {
+const common: esbuild.BuildOptions = {
     outbase: "src",
     bundle: true,
     sourcemap: true,
@@ -15,7 +15,7 @@ const common = {
     jsxFragment: "Fragment",
 };
 
-const electron = {
+const electron: esbuild.BuildOptions = {
     entryPoints: ["src/main.ts"],
     outdir: "dist",
     packages: "external",
@@ -24,7 +24,7 @@ const electron = {
     target: "node22",
 };
 
-const preload = {
+const preload: esbuild.BuildOptions = {
     entryPoints: ["src/preload.tsx"],
     outfile: "dist/preload.cjs",
     format: "cjs",
@@ -32,7 +32,7 @@ const preload = {
     target: "node22",
 };
 
-const configs = [
+const configs: esbuild.BuildOptions[] = [
     {
         ...common,
         ...electron,
