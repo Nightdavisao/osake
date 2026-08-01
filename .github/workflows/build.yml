@@ -25,5 +25,5 @@ jobs:
             - name: Upload artifact
               uses: actions/upload-artifact@v4
               with:
-                  name: linux
-                  path: release/*
+                  name: linux-appimage
+                  path: release/*.AppImage
