@@ -160,5 +160,6 @@ export function setupTray(state: AppState) {
     const { trayPng } = getIconFilenames(state.currentWebsite);
     state.tray = new Tray(path.join(getResourcesPath(), "assets", trayPng));
     state.tray.setToolTip(DEFAULT_WINDOW_TITLE);
+    buildTrayMenu(state)
 }
 
