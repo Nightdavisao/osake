@@ -11,6 +11,10 @@
         "app:dist": "npx tsc -noEmit && node esbuild.js && electron-builder"
     },
     "build": {
+        "directories": {
+            "app": "dist",
+            "output": "release"
+        },
         "productName": "osake player",
         "publish": null,
         "icon": "assets/am-icon.png",

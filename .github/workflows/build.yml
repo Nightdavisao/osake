@@ -1,33 +1,36 @@
 name: Build for Linux targets
 
 on:
-  push:
-    branches: ["*"]
+    push:
+        branches: ["*"]
 
 jobs:
-  build-linux:
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    env:
-        SHA: ${GITHUB_SHA::7}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run app:dist -- --linux AppImage
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux
-          path: dist/*
-      - name: Create pre-release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: linux-$SHA
-          name: Nightly release for Linux $SHA
-          prerelease: true
-          files: dist/*
+    build-linux:
+        permissions:
+            contents: write
+        runs-on: ubuntu-latest
+        env:
+            SHA: ${GITHUB_SHA::7}
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: "24"
+                  cache: "npm"
+            - name: Set outputs
+              id: vars
+              run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+            - run: npm ci
+            - run: npm run app:dist -- --linux AppImage
+            - name: Upload artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: linux
+                  path: dist/*
+            - name: Create pre-release
+              uses: softprops/action-gh-release@v1
+              with:
+                  tag_name: linux-${{ steps.vars.outputs.sha_short }}
+                  name: Nightly release for Linux ${{ steps.vars.outputs.sha_short }}
+                  prerelease: true
+                  files: release/*
