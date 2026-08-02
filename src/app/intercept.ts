@@ -1,5 +1,5 @@
-import { testPatches } from "../patcher";
-import { AM_BASE_URL } from "../utils";
+import { testPatches } from "~/patcher";
+import { AM_BASE_URL } from "~/utils";
 
 export async function interceptFetchResponse(dbg: Electron.Debugger) {
     dbg.attach("1.3");

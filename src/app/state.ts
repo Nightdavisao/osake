@@ -1,23 +1,21 @@
 import { app, BrowserWindow, dialog, ipcMain, Tray } from "electron";
-import { AppConfig } from "../config";
-import { fileURLToPath } from "node:url";
+import { getLogger, Logger } from "log4js";
 import os from "node:os";
+import { fileURLToPath } from "node:url";
+import { MKPlaybackState, WebsiteType } from "~/@types/enums";
+import { TrackMetadata } from "~/@types/interfaces";
+import { AppConfig } from "~/config";
+import { DiscordIntegration } from "~/integration/discord";
+import { MPRISIntegration } from "~/integration/mpris";
+import { PlayerSink } from "~/player";
 import {
     AM_BASE_URL,
     AM_CLASSICAL_BASE_URL,
     getAppleGeolocation,
-} from "../utils";
-import { PlayerSink as PlayerSink } from "../player";
-import { MPRISIntegration } from "../integration/mpris";
-import { DiscordIntegration } from "../integration/discord";
-import { MKPlaybackState, WebsiteType } from "../@types/enums";
+} from "~/utils";
+import { interceptFetchResponse } from "./intercept";
 import { buildTrayMenu, openAppMenu, setupTray } from "./menu";
 import { DEFAULT_WINDOW_TITLE, getIconFilenames } from "./utils";
-import { interceptFetchResponse } from "./intercept";
-import { TrackMetadata } from "../@types/interfaces";
-import log4js from "log4js";
-import { Logger } from "log4js";
-const { getLogger } = log4js;
 
 const currentPlatform = os.platform();
 

@@ -1,8 +1,7 @@
 import { app } from "electron";
-import log4js from "log4js";
-const { getLogger } = log4js;
+import { getLogger } from "log4js";
 import os from "node:os";
-import { AppState } from "./app/state";
+import { AppState } from "~/app/state";
 
 const logger = getLogger("main");
 logger.level = "debug";

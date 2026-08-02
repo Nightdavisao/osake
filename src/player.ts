@@ -1,10 +1,8 @@
 import { IpcMain, IpcMainEvent } from "electron";
+import { getLogger, Logger } from "log4js";
 import { EventEmitter } from "node:events";
-import { PlayerIntegration, TrackMetadata } from "./@types/interfaces";
-import { MKPlaybackState, MKRepeatMode } from "./@types/enums";
-import { Logger } from "log4js";
-import log4js from "log4js";
-const { getLogger } = log4js;
+import { MKPlaybackState, MKRepeatMode } from "~/@types/enums";
+import { PlayerIntegration, TrackMetadata } from "~/@types/interfaces";
 
 export class PlayerSink extends EventEmitter {
     ipcMain: IpcMain;

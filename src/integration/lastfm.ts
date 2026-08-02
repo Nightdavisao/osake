@@ -1,15 +1,14 @@
-import { PlayerIntegration } from "../@types/interfaces";
-import { MKPlaybackState, WebsiteType } from "../@types/enums";
+import { getLogger, Logger } from "log4js";
+import { MKPlaybackState, WebsiteType } from "~/@types/enums";
+import { PlayerIntegration } from "~/@types/interfaces";
 import {
     LastFmApiErrorCode,
     LastFMClient,
     LastFmClientError,
-} from "../lastfm/client";
-import { LastFMScrubbler } from "../lastfm/scrubbler";
-import { PlayerSink } from "../player";
-import { millisToSec, sanitizeName } from "../utils";
-import { Logger } from "log4js";
-import log4js from "log4js";
+} from "~/lastfm/client";
+import { LastFMScrubbler } from "~/lastfm/scrubbler";
+import { PlayerSink } from "~/player";
+import { millisToSec, sanitizeName } from "~/utils";
 
 export class LastFMIntegration implements PlayerIntegration {
     shortName: string = "lastfm";
@@ -40,7 +39,7 @@ export class LastFMIntegration implements PlayerIntegration {
         activeWebsite: WebsiteType,
         client: LastFMClient,
     ) {
-        this.logger = log4js.getLogger("lastfmIntegration");
+        this.logger = getLogger("lastfmIntegration");
         this.logger.level = "debug";
         this.activeWebsite = activeWebsite;
         this.isClassical = activeWebsite === 'classical';

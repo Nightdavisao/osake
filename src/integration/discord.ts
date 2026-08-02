@@ -1,14 +1,13 @@
-import { Client } from "@xhayper/discord-rpc";
-import { PlayerSink } from "../player";
-import { TrackMetadata, PlayerIntegration } from "../@types/interfaces";
-import { MKPlaybackState } from "../@types/enums";
-import { secToMillis, getArtworkUrl, uploadToFreeImageHost } from "../utils";
-import { Logger } from "log4js";
-import log4js from "log4js";
-import { AppState } from "../app/state";
-import SQLiteBackedKV from "../database/kv";
-import { app } from "electron";
 import { xxh64 } from "@node-rs/xxhash";
+import { Client } from "@xhayper/discord-rpc";
+import { app } from "electron";
+import log4js, { Logger } from "log4js";
+import { MKPlaybackState } from "~/@types/enums";
+import { PlayerIntegration, TrackMetadata } from "~/@types/interfaces";
+import { AppState } from "~/app/state";
+import SQLiteBackedKV from "~/database/kv";
+import { PlayerSink } from "~/player";
+import { getArtworkUrl, secToMillis, uploadToFreeImageHost } from "~/utils";
 
 const INVISIBLE = "\u00A0";
 

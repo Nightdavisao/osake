@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { App } from "electron/main";
-import { AppOptions } from "./@types/interfaces";
 import fs from "fs";
+import { getLogger, Logger } from "log4js";
 import { EventEmitter } from "node:events";
-import { Logger } from "log4js";
-import log4js from "log4js";
-import { join } from 'node:path'
+import { join } from 'node:path';
+import { AppOptions } from "~/@types/interfaces";
 
 export class AppConfig extends EventEmitter {
     app: App;
@@ -16,7 +15,7 @@ export class AppConfig extends EventEmitter {
     constructor(app: App, defaultOptions: AppOptions) {
         super();
         this.app = app;
-        this.logger = log4js.getLogger("appConfig");
+        this.logger = getLogger("appConfig");
         this.logger.level = "debug";
         this.default = defaultOptions;
         this.current = this._load() || defaultOptions;

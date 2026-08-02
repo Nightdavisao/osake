@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import backIconSvg from "./svg/back.svg"
-import forwardIconSvg from "./svg/forward.svg";
+import backIconSvg from "./svg/back.svg";
 import appMenuIconSvg from "./svg/ellipsis.svg";
+import forwardIconSvg from "./svg/forward.svg";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { h, Fragment } from "jsx-dom";
-import styleFixtures from "./fixtures.css"
+import { h } from "jsx-dom";
+import styleFixtures from "./fixtures.css";
 
 import { contextBridge, ipcRenderer } from "electron";
 
@@ -93,7 +93,6 @@ function buildDraggableRegion() {
 
 document.addEventListener("DOMContentLoaded", () => {
     const styleElement = document.createElement("style")
-    styleElement.type = "text/css"
     styleElement.innerText = styleFixtures
     document.head.appendChild(styleElement)
     

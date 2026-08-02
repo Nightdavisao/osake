@@ -1,5 +1,4 @@
-import log4js from "log4js";
-const { getLogger } = log4js;
+import { getLogger } from "log4js";
 
 const logger = getLogger('patcher')
 
