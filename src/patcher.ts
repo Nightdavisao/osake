@@ -1,7 +1,6 @@
 import log4js from "log4js";
-const { getLogger } = log4js;
 
-const logger = getLogger('patcher')
+const logger = log4js.getLogger('patcher')
 
 const PATCHES = [
     // these only stops Apple Music from overriding metadata from uploaded cloud items

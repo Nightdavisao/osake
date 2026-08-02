@@ -1,13 +1,12 @@
 import dbus from "dbus-next";
-import { EventEmitter } from "events";
-import {
-    MediaPlayer2PlayerInterface,
-    MediaPlayer2Interface,
-} from "./interface";
-import { LoopStatus, PlaybackStatus } from "./enums";
-import { Logger } from "log4js";
-import log4js from "log4js";
 import { app } from "electron";
+import { EventEmitter } from "events";
+import log4js, { Logger } from "log4js";
+import { LoopStatus, PlaybackStatus } from "./enums";
+import {
+    MediaPlayer2Interface,
+    MediaPlayer2PlayerInterface,
+} from "./interface";
 
 export class MPRISService extends EventEmitter {
     logger: Logger;

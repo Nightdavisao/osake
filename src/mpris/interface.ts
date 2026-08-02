@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import dbus from "dbus-next";
-import { MPRISService } from "./service";
 import { app } from "electron";
+import { MPRISService } from "./service";
 
 export class MediaPlayer2Interface extends dbus.interface.Interface {
     service: MPRISService;

@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { App } from "electron/main";
-import { AppOptions } from "./@types/interfaces";
 import fs from "fs";
+import log4js, { Logger } from "log4js";
 import { EventEmitter } from "node:events";
-import { Logger } from "log4js";
-import log4js from "log4js";
-import { join } from 'node:path'
+import { join } from 'node:path';
+import { AppOptions } from "~/@types/interfaces";
 
 export class AppConfig extends EventEmitter {
     app: App;

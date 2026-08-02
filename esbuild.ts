@@ -1,5 +1,5 @@
-import * as fs from "node:fs/promises";
 import * as esbuild from "esbuild";
+import * as fs from "node:fs/promises";
 
 const common: esbuild.BuildOptions = {
     outbase: "src",

@@ -1,7 +1,7 @@
-import { TrackMetadata } from "./@types/interfaces";
+import fs from "node:fs/promises";
 import { file } from "tmp-promise";
-import fs from "fs/promises";
-import { AppConfig } from "./config";
+import { TrackMetadata } from "~/@types/interfaces";
+import { AppConfig } from "~/config";
 
 export const AM_BASE_URL = "https://beta.music.apple.com";
 export const AM_CLASSICAL_BASE_URL = "https://classical.music.apple.com";
