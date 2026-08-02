@@ -1,0 +1,11 @@
+useTabs = true
+quoteProps = "consistent"
+semi = true
+singleQuote = false
+trailingComma = "all"
+objectWrap = "preserve"
+bracketSameLine = true
+arrowParens = "avoid"
+singleAttributePerLine = true
+experimentalTernaries = true
+experimentalOperatorPosition = "start"

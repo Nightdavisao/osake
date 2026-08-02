@@ -1,27 +1,27 @@
 /* hide apple music's logo */
 .logo {
-    display: none !important;
+	display: none !important;
 }
 
 /* hide "Open in Music" and exit beta */
 button[data-testid="exit-beta"],
 div[data-testid="native-cta"] {
-    display: none !important;
+	display: none !important;
 }
 
 /* the floating buttons on the right upper corner */
 div[slot="secondary-actions"] {
-    position: fixed;
-    z-index: 2;
-    margin-right: 5px;
+	position: fixed;
+	z-index: 2;
+	margin-right: 5px;
 }
 
 /* lyrics/queue (fixme: queue needs a better style) */
 div[role="complementary"] > div:first-child {
-    margin-top: env(titlebar-area-height, 0);
+	margin-top: env(titlebar-area-height, 0);
 }
 
 /* translation/transliteration button on immersive mode */
 .lyrics-translation-menu {
-    margin-top: env(titlebar-area-height, 0);
+	margin-top: env(titlebar-area-height, 0);
 }

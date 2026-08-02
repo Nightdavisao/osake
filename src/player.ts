@@ -5,159 +5,159 @@ import { MKPlaybackState, MKRepeatMode } from "~/@types/enums";
 import { PlayerIntegration, TrackMetadata } from "~/@types/interfaces";
 
 export class PlayerSink extends EventEmitter {
-    ipcMain: IpcMain;
-    webContents: Electron.WebContents;
-    logger: Logger;
-    metadata: TrackMetadata | null;
-    playbackState: MKPlaybackState;
-    playbackTime: number;
-    shuffleMode: boolean;
-    repeatMode: MKRepeatMode;
-    playerEvents: string[];
-    integrations: Map<string, PlayerIntegration>;
-    
-    constructor(ipcMain: IpcMain, webContents: Electron.WebContents) {
-        super();
-        this.logger = log4js.getLogger("playerSink");
-        this.ipcMain = ipcMain;
-        this.webContents = webContents;
-        this.playerEvents = [
-            "nowPlaying",
-            "nowPlayingAlbumData",
-            "playbackState",
-            "playbackTime",
-            "shuffle",
-            "repeat",
-        ];
+	ipcMain: IpcMain;
+	webContents: Electron.WebContents;
+	logger: Logger;
+	metadata: TrackMetadata | null;
+	playbackState: MKPlaybackState;
+	playbackTime: number;
+	shuffleMode: boolean;
+	repeatMode: MKRepeatMode;
+	playerEvents: string[];
+	integrations: Map<string, PlayerIntegration>;
 
-        this.metadata = null;
-        this.playbackState = MKPlaybackState.Stopped;
-        this.playbackTime = 0;
-        this.repeatMode = MKRepeatMode.None;
-        this.shuffleMode = false;
+	constructor(ipcMain: IpcMain, webContents: Electron.WebContents) {
+		super();
+		this.logger = log4js.getLogger("playerSink");
+		this.ipcMain = ipcMain;
+		this.webContents = webContents;
+		this.playerEvents = [
+			"nowPlaying",
+			"nowPlayingAlbumData",
+			"playbackState",
+			"playbackTime",
+			"shuffle",
+			"repeat",
+		];
 
-        this.integrations = new Map();
-    }
+		this.metadata = null;
+		this.playbackState = MKPlaybackState.Stopped;
+		this.playbackTime = 0;
+		this.repeatMode = MKRepeatMode.None;
+		this.shuffleMode = false;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    dispatchIpcMessage(channel: string, data: any = null) {
-        this.webContents.send(channel, data);
-    }
+		this.integrations = new Map();
+	}
 
-    playPause() {
-        this.dispatchIpcMessage("playpause");
-    }
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	dispatchIpcMessage(channel: string, data: any = null) {
+		this.webContents.send(channel, data);
+	}
 
-    play() {
-        this.dispatchIpcMessage("playbackState", { state: "playing" });
-    }
+	playPause() {
+		this.dispatchIpcMessage("playpause");
+	}
 
-    pause() {
-        this.dispatchIpcMessage("playbackState", { state: "paused" });
-    }
+	play() {
+		this.dispatchIpcMessage("playbackState", { state: "playing" });
+	}
 
-    stop() {
-        this.dispatchIpcMessage("playbackState", { state: "stopped" });
-    }
+	pause() {
+		this.dispatchIpcMessage("playbackState", { state: "paused" });
+	}
 
-    next() {
-        this.dispatchIpcMessage("nextTrack");
-    }
+	stop() {
+		this.dispatchIpcMessage("playbackState", { state: "stopped" });
+	}
 
-    previous() {
-        this.dispatchIpcMessage("previousTrack");
-    }
+	next() {
+		this.dispatchIpcMessage("nextTrack");
+	}
 
-    setShuffle(mode: boolean) {
-        if (typeof mode !== "boolean" || this.shuffleMode === mode) return;
+	previous() {
+		this.dispatchIpcMessage("previousTrack");
+	}
 
-        this.logger.debug("setShuffle", mode);
-        this.dispatchIpcMessage("shuffle", { mode });
-    }
+	setShuffle(mode: boolean) {
+		if (typeof mode !== "boolean" || this.shuffleMode === mode) return;
 
-    setRepeat(mode: MKRepeatMode) {
-        if (typeof mode !== "string" || this.repeatMode === mode) return;
+		this.logger.debug("setShuffle", mode);
+		this.dispatchIpcMessage("shuffle", { mode });
+	}
 
-        this.logger.debug("setRepeat", mode);
-        this.dispatchIpcMessage("repeat", { mode });
-    }
+	setRepeat(mode: MKRepeatMode) {
+		if (typeof mode !== "string" || this.repeatMode === mode) return;
 
-    seek(time: number) {
-        this.dispatchIpcMessage("playbackTime", { progress: time });
-    }
+		this.logger.debug("setRepeat", mode);
+		this.dispatchIpcMessage("repeat", { mode });
+	}
 
-    initialize() {
-        this.playerEvents.forEach((event) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            this.ipcMain.on(event, (_: IpcMainEvent, data: any) => {
-                this.emit(event, data);
-            });
-        });
+	seek(time: number) {
+		this.dispatchIpcMessage("playbackTime", { progress: time });
+	}
 
-        this.on("nowPlaying", (data: TrackMetadata) => {
-            this.metadata = data;
-            this.playbackTime = 0;
-        });
-        this.on(
-            "playbackState",
-            (data: { state: MKPlaybackState }) =>
-                (this.playbackState = data.state),
-        );
-        this.on(
-            "playbackTime",
-            (data: { position: number }) => (this.playbackTime = data.position),
-        );
-        this.on(
-            "shuffle",
-            (data: { mode: boolean }) => (this.shuffleMode = data.mode),
-        );
-        this.on(
-            "repeat",
-            (data: { mode: MKRepeatMode }) => (this.repeatMode = data.mode),
-        );
+	initialize() {
+		this.playerEvents.forEach(event => {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			this.ipcMain.on(event, (_: IpcMainEvent, data: any) => {
+				this.emit(event, data);
+			});
+		});
 
-        const integrationsToLoad = Promise.all(this.integrations.values());
+		this.on("nowPlaying", (data: TrackMetadata) => {
+			this.metadata = data;
+			this.playbackTime = 0;
+		});
+		this.on(
+			"playbackState",
+			(data: { state: MKPlaybackState }) =>
+				(this.playbackState = data.state),
+		);
+		this.on(
+			"playbackTime",
+			(data: { position: number }) => (this.playbackTime = data.position),
+		);
+		this.on(
+			"shuffle",
+			(data: { mode: boolean }) => (this.shuffleMode = data.mode),
+		);
+		this.on(
+			"repeat",
+			(data: { mode: MKRepeatMode }) => (this.repeatMode = data.mode),
+		);
 
-        integrationsToLoad
-            .then(() => {
-                this.logger.info("all integrations loaded");
-                return;
-            })
-            .catch((error) => {
-                this.logger.error("error loading integrations", error);
-            });
-    }
+		const integrationsToLoad = Promise.all(this.integrations.values());
 
-    addIntegration(integration: PlayerIntegration) {
-        if (!this.hasIntegration(integration.shortName)) {
-            this.logger.debug(`adding integration ${integration.shortName}`);
-            this.integrations.set(integration.shortName, integration);
-            integration.load();
+		integrationsToLoad
+			.then(() => {
+				this.logger.info("all integrations loaded");
+				return;
+			})
+			.catch(error => {
+				this.logger.error("error loading integrations", error);
+			});
+	}
 
-            return;
-        }
-        throw new Error(
-            "This integration is already added to the integrations map.",
-        );
-    }
+	addIntegration(integration: PlayerIntegration) {
+		if (!this.hasIntegration(integration.shortName)) {
+			this.logger.debug(`adding integration ${integration.shortName}`);
+			this.integrations.set(integration.shortName, integration);
+			integration.load();
 
-    hasIntegration(shortName: string) {
-        return this.integrations.has(shortName);
-    }
+			return;
+		}
+		throw new Error(
+			"This integration is already added to the integrations map.",
+		);
+	}
 
-    getIntegration<T>(shortName: string): T {
-        return this.integrations.get(shortName) as T;
-    }
+	hasIntegration(shortName: string) {
+		return this.integrations.has(shortName);
+	}
 
-    async enableIntegration(shortName: string) {
-        const integration = this.integrations.get(shortName);
-        this.logger.debug(`enabling integration ${shortName}`);
-        await integration?.load();
-    }
+	getIntegration<T>(shortName: string): T {
+		return this.integrations.get(shortName) as T;
+	}
 
-    async disableIntegration(shortName: string) {
-        const integration = this.integrations.get(shortName);
-        this.logger.debug(`disabling integration ${shortName}`);
-        await integration?.unload();
-    }
+	async enableIntegration(shortName: string) {
+		const integration = this.integrations.get(shortName);
+		this.logger.debug(`enabling integration ${shortName}`);
+		await integration?.load();
+	}
+
+	async disableIntegration(shortName: string) {
+		const integration = this.integrations.get(shortName);
+		this.logger.debug(`disabling integration ${shortName}`);
+		await integration?.unload();
+	}
 }

@@ -1,76 +1,78 @@
 {
-    "name": "osake",
-    "desktopName": "Osake",
-    "version": "1.0.0",
-    "description": "Unofficial Apple Music web Electron wrapper",
-    "main": "dist/main.js",
-    "scripts": {
-        "start": "npx tsc -noEmit && node esbuild.ts && electron . --no-sandbox",
-        "build": "npx tsc -noEmit && node esbuild.ts",
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "app:dist": "npx tsc -noEmit && node esbuild.ts && electron-builder"
-    },
-    "build": {
-        "directories": {
-            "output": "release"
-        },
-        "productName": "Osake",
-        "publish": null,
-        "icon": "assets/am-icon.png",
-        "appId": "io.github.nightdavisao.osake",
-        "linux": {
-            "target": [
-                "AppImage",
-                "flatpak",
-                "pacman",
-                "deb",
-                "rpm"
-            ],
-            "icon": "assets/am-icon.png",
-            "category": "AudioVideo",
-            "syncDesktopName": true
-        },
-        "extraResources": [
-            "assets/**/*"
-        ],
-        "files": [
-            "dist/**/*.js",
-            "dist/**/*.cjs"
-        ],
-        "electronDownload": {
-            "mirror": "https://github.com/castlabs/electron-releases/releases/download/"
-        }
-    },
-    "keywords": [],
-    "author": "Nightdavisao <nightdavisao@proton.me>",
-    "license": "MPL-2.0",
-    "type": "module",
-    "devDependencies": {
-        "@eslint/js": "^9.25.1",
-        "cross-env": "^10.1.0",
-        "electron": "git+https://github.com/castlabs/electron-releases.git#v44.0.0-alpha.1+wvcus",
-        "electron-builder": "^26.15.3",
-        "esbuild": "0.28.1",
-        "eslint": "^9.33.0",
-        "eslint-plugin-promise": "^7.2.1",
-        "globals": "^16.3.0",
-        "typescript": "^5.9.2",
-        "typescript-eslint": "^8.39.1"
-    },
-    "dependencies": {
-        "@node-rs/xxhash": "^1.7.6",
-        "@xhayper/discord-rpc": "^1.3.0",
-        "dbus-next": "github:Nightdavisao/node-dbus-next",
-        "jsx-dom": "^8.1.6",
-        "log4js": "^6.9.1",
-        "tmp": "^0.2.7",
-        "tmp-promise": "^3.0.3"
-    },
-    "allowScripts": {
-        "github:castlabs/electron-releases#3d2c050af10edc7913c5cbbe03c2ab04267eeadb": true,
-        "electron-winstaller@5.4.0": true,
-        "github:castlabs/electron-releases#f466da09e341c26efe6e72e32372f4d0473846e6": true,
-        "github:castlabs/electron-releases#b302a7fd234c9f3607db2307a2b6e8d8b87bd3ed": true,
-        "esbuild@0.28.1": true
-    }
+	"name": "osake",
+	"desktopName": "Osake",
+	"version": "1.0.0",
+	"description": "Unofficial Apple Music web Electron wrapper",
+	"main": "dist/main.js",
+	"scripts": {
+		"start": "npx tsc -noEmit && node esbuild.ts && electron . --no-sandbox",
+		"build": "npx tsc -noEmit && node esbuild.ts",
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"app:dist": "npx tsc -noEmit && node esbuild.ts && electron-builder"
+	},
+	"build": {
+		"directories": {
+			"output": "release"
+		},
+		"productName": "Osake",
+		"publish": null,
+		"icon": "assets/am-icon.png",
+		"appId": "io.github.nightdavisao.osake",
+		"linux": {
+			"target": [
+				"AppImage",
+				"flatpak",
+				"pacman",
+				"deb",
+				"rpm"
+			],
+			"icon": "assets/am-icon.png",
+			"category": "AudioVideo",
+			"syncDesktopName": true
+		},
+		"extraResources": [
+			"assets/**/*"
+		],
+		"files": [
+			"dist/**/*.js",
+			"dist/**/*.cjs"
+		],
+		"electronDownload": {
+			"mirror": "https://github.com/castlabs/electron-releases/releases/download/"
+		}
+	},
+	"keywords": [],
+	"author": "Nightdavisao <nightdavisao@proton.me>",
+	"license": "MPL-2.0",
+	"type": "module",
+	"devDependencies": {
+		"@eslint/js": "^9.25.1",
+		"cross-env": "^10.1.0",
+		"electron": "git+https://github.com/castlabs/electron-releases.git#v44.0.0-alpha.1+wvcus",
+		"electron-builder": "^26.15.3",
+		"esbuild": "0.28.1",
+		"eslint": "^9.33.0",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-promise": "^7.2.1",
+		"globals": "^16.3.0",
+		"prettier": "3.9.6",
+		"typescript": "^5.9.2",
+		"typescript-eslint": "^8.39.1"
+	},
+	"dependencies": {
+		"@node-rs/xxhash": "^1.7.6",
+		"@xhayper/discord-rpc": "^1.3.0",
+		"dbus-next": "github:Nightdavisao/node-dbus-next",
+		"jsx-dom": "^8.1.6",
+		"log4js": "^6.9.1",
+		"tmp": "^0.2.7",
+		"tmp-promise": "^3.0.3"
+	},
+	"allowScripts": {
+		"github:castlabs/electron-releases#3d2c050af10edc7913c5cbbe03c2ab04267eeadb": true,
+		"electron-winstaller@5.4.0": true,
+		"github:castlabs/electron-releases#f466da09e341c26efe6e72e32372f4d0473846e6": true,
+		"github:castlabs/electron-releases#b302a7fd234c9f3607db2307a2b6e8d8b87bd3ed": true,
+		"esbuild@0.28.1": true
+	}
 }

@@ -1,24 +1,24 @@
 {
-    "compilerOptions": {
-        "target": "esnext",
-        "module": "esnext",
-        "sourceMap": true,
-        "inlineSourceMap": false /* Include sourcemap files inside the emitted JavaScript. */,
-        "outDir": "./dist" /* Specify an output folder for all emitted files. */,
-        "esModuleInterop": true /* Emit additional JavaScript to ease support for importing CommonJS modules. This enables 'allowSyntheticDefaultImports' for type compatibility. */,
-        "forceConsistentCasingInFileNames": true /* Ensure that casing is correct in imports. */,
-        "moduleResolution": "bundler",
-        "noEmit": true,
-        "jsx": "react",
-        "jsxFactory": "h",
-        "jsxFragmentFactory": "Fragment",
-        /* Type Checking */
-        "strict": true /* Enable all strict type-checking options. */,
-        "skipLibCheck": true /* Skip type checking all .d.ts files. */,
-        "paths": {
-            "~/*": ["./src/*"]
-        }
-    },
-    "include": ["src/**/*.ts", "src/**/*.tsx"],
-    "exclude": ["node_modules", "dist"],
+	"compilerOptions": {
+		"target": "esnext",
+		"module": "esnext",
+		"sourceMap": true,
+		"inlineSourceMap": false /* Include sourcemap files inside the emitted JavaScript. */,
+		"outDir": "./dist" /* Specify an output folder for all emitted files. */,
+		"esModuleInterop": true /* Emit additional JavaScript to ease support for importing CommonJS modules. This enables 'allowSyntheticDefaultImports' for type compatibility. */,
+		"forceConsistentCasingInFileNames": true /* Ensure that casing is correct in imports. */,
+		"moduleResolution": "bundler",
+		"noEmit": true,
+		"jsx": "react",
+		"jsxFactory": "h",
+		"jsxFragmentFactory": "Fragment",
+		/* Type Checking */
+		"strict": true /* Enable all strict type-checking options. */,
+		"skipLibCheck": true /* Skip type checking all .d.ts files. */,
+		"paths": {
+			"~/*": ["./src/*"]
+		}
+	},
+	"include": ["src/**/*.ts", "src/**/*.tsx"],
+	"exclude": ["node_modules", "dist"]
 }

@@ -136,3 +136,6 @@ dist
 .pnp.*
 
 release/
+
+# editor settings
+.zed/

@@ -2,56 +2,56 @@ import * as esbuild from "esbuild";
 import * as fs from "node:fs/promises";
 
 const common: esbuild.BuildOptions = {
-    outbase: "src",
-    bundle: true,
-    sourcemap: true,
-    external: ["electron", "x11"],
-    loader: {
-        ".svg": "text",
-        ".png": "dataurl",
-        ".css": "text"
-    },
-    jsxFactory: "h",
-    jsxFragment: "Fragment",
+	outbase: "src",
+	bundle: true,
+	sourcemap: true,
+	external: ["electron", "x11"],
+	loader: {
+		".svg": "text",
+		".png": "dataurl",
+		".css": "text",
+	},
+	jsxFactory: "h",
+	jsxFragment: "Fragment",
 };
 
 const electron: esbuild.BuildOptions = {
-    entryPoints: ["src/main.ts"],
-    outdir: "dist",
-    packages: "external",
-    format: "esm",
-    platform: "node",
-    target: "node22",
+	entryPoints: ["src/main.ts"],
+	outdir: "dist",
+	packages: "external",
+	format: "esm",
+	platform: "node",
+	target: "node22",
 };
 
 const preload: esbuild.BuildOptions = {
-    entryPoints: ["src/preload.tsx"],
-    outfile: "dist/preload.cjs",
-    format: "cjs",
-    platform: "node",
-    target: "node22",
+	entryPoints: ["src/preload.tsx"],
+	outfile: "dist/preload.cjs",
+	format: "cjs",
+	platform: "node",
+	target: "node22",
 };
 
 const configs: esbuild.BuildOptions[] = [
-    {
-        ...common,
-        ...electron,
-    },
-    {
-        ...common,
-        ...preload,
-    },
+	{
+		...common,
+		...electron,
+	},
+	{
+		...common,
+		...preload,
+	},
 ];
 
 await fs.cp("assets", "dist/assets", { recursive: true });
 
 if (process.argv.includes("--watch")) {
-    for (const cfg of configs) {
-        const ctx = await esbuild.context(cfg);
-        await ctx.watch();
-    }
+	for (const cfg of configs) {
+		const ctx = await esbuild.context(cfg);
+		await ctx.watch();
+	}
 
-    console.log("Watching...");
+	console.log("Watching...");
 } else {
-    await Promise.all(configs.map(esbuild.build));
+	await Promise.all(configs.map(esbuild.build));
 }
