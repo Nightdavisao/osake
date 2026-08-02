@@ -141,7 +141,10 @@ export async function getAppleGeolocation(config: AppConfig): Promise<string> {
 				}
 			}
 		} catch (e) {
-			throw new CustomError("", e as Error);
+			throw new CustomError(
+				"Unable to get geo cookie from Apple Music",
+				e as Error,
+			);
 		}
 	}
 
