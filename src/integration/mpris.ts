@@ -1,4 +1,4 @@
-import { getLogger, Logger } from "log4js";
+import log4js, { Logger } from "log4js";
 import { MKPlaybackState, MKRepeatMode } from "~/@types/enums";
 import { PlayerIntegration, TrackMetadata } from "~/@types/interfaces";
 import { LoopStatus, PlaybackStatus } from "~/mpris/enums";
@@ -16,7 +16,7 @@ export class MPRISIntegration implements PlayerIntegration {
     mprisMetadata: Record<string, any> = {};
 
     constructor(player: PlayerSink) {
-        this.logger = getLogger("mprisIntegration");
+        this.logger = log4js.getLogger("mprisIntegration");
         this.logger.level = "debug";
         this.player = player;
         this.mpris = new MPRISService();

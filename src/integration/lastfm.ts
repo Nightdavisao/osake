@@ -1,4 +1,4 @@
-import { getLogger, Logger } from "log4js";
+import log4js, { Logger } from "log4js";
 import { MKPlaybackState, WebsiteType } from "~/@types/enums";
 import { PlayerIntegration } from "~/@types/interfaces";
 import {
@@ -39,7 +39,7 @@ export class LastFMIntegration implements PlayerIntegration {
         activeWebsite: WebsiteType,
         client: LastFMClient,
     ) {
-        this.logger = getLogger("lastfmIntegration");
+        this.logger = log4js.getLogger("lastfmIntegration");
         this.logger.level = "debug";
         this.activeWebsite = activeWebsite;
         this.isClassical = activeWebsite === 'classical';

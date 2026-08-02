@@ -1,7 +1,7 @@
 import dbus from "dbus-next";
 import { app } from "electron";
 import { EventEmitter } from "events";
-import { getLogger, Logger } from "log4js";
+import log4js, { Logger } from "log4js";
 import { LoopStatus, PlaybackStatus } from "./enums";
 import {
     MediaPlayer2Interface,
@@ -16,7 +16,7 @@ export class MPRISService extends EventEmitter {
     playerInterface: MediaPlayer2PlayerInterface | null;
     constructor() {
         super();
-        this.logger = getLogger("mpris");
+        this.logger = log4js.getLogger("mpris");
         this.logger.level = "debug";
 
         this.initialized = false;

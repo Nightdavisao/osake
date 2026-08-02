@@ -1,5 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain, Tray } from "electron";
-import { getLogger, Logger } from "log4js";
+import log4js, { Logger } from "log4js";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
 import { MKPlaybackState, WebsiteType } from "~/@types/enums";
@@ -20,7 +20,7 @@ import { DEFAULT_WINDOW_TITLE, getIconFilenames } from "./utils";
 const currentPlatform = os.platform();
 
 export class AppState {
-    logger: Logger = getLogger("appState");
+    logger: Logger = log4js.getLogger("appState");
     mainWindow: BrowserWindow | null = null;
     currentWebsite: WebsiteType = "music";
     playerSink: PlayerSink | null = null;

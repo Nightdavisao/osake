@@ -1,5 +1,5 @@
 import { IpcMain, IpcMainEvent } from "electron";
-import { getLogger, Logger } from "log4js";
+import log4js, { Logger } from "log4js";
 import { EventEmitter } from "node:events";
 import { MKPlaybackState, MKRepeatMode } from "~/@types/enums";
 import { PlayerIntegration, TrackMetadata } from "~/@types/interfaces";
@@ -18,7 +18,7 @@ export class PlayerSink extends EventEmitter {
     
     constructor(ipcMain: IpcMain, webContents: Electron.WebContents) {
         super();
-        this.logger = getLogger("playerSink");
+        this.logger = log4js.getLogger("playerSink");
         this.ipcMain = ipcMain;
         this.webContents = webContents;
         this.playerEvents = [
