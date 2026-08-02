@@ -82,7 +82,7 @@ export class MPRISIntegration implements PlayerIntegration {
         });
 
         this.player.on(
-            "nowPlayingAlbum",
+            "nowPlayingAlbumData",
             async (albumData: { artistName: string } | null) => {
                 if (albumData && albumData.artistName) {
                     this.mprisMetadata["xesam:albumArtist"] =

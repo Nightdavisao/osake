@@ -11,7 +11,7 @@ const appState = new AppState();
 // https://wiki.cachyos.org/configuration/enabling_hardware_acceleration_in_google_chrome/
 const CMD_LINE_FLAGS = [
     "ignore-gpu-blocklist",
-    "ignore-gpu-rasterization",
+    "enable-gpu-rasterization",
     "enable-zero-copy",
     [
         "enable-feature",
