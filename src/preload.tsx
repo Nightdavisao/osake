@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import backIconSvg from "./extra/svg/back.svg";
-import appMenuIconSvg from "./extra/svg/ellipsis.svg";
-import forwardIconSvg from "./extra/svg/forward.svg";
+import backIconSvg from "~~/svg/back.svg";
+import appMenuIconSvg from "~~/svg/ellipsis.svg";
+import forwardIconSvg from "~~/svg/forward.svg";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { h } from "jsx-dom";
-import styleFixtures from "./extra/css/fixtures.css";
+import styleFixtures from "~/extra/css/fixtures.css";
 
 import { contextBridge, ipcRenderer } from "electron";
 
