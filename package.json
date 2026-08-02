@@ -8,7 +8,8 @@
 		"start": "npx tsc -noEmit && node esbuild.ts && electron . --no-sandbox",
 		"build": "npx tsc -noEmit && node esbuild.ts",
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"app:dist": "npx tsc -noEmit && node esbuild.ts && electron-builder"
+		"app:dist": "npx tsc -noEmit && node esbuild.ts && electron-builder",
+		"prepare": "husky"
 	},
 	"build": {
 		"directories": {
@@ -55,6 +56,8 @@
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-promise": "^7.2.1",
 		"globals": "^16.3.0",
+		"husky": "^9.1.7",
+		"lint-staged": "^17.3.0",
 		"prettier": "3.9.6",
 		"typescript": "^5.9.2",
 		"typescript-eslint": "^8.39.1"
@@ -74,5 +77,8 @@
 		"github:castlabs/electron-releases#f466da09e341c26efe6e72e32372f4d0473846e6": true,
 		"github:castlabs/electron-releases#b302a7fd234c9f3607db2307a2b6e8d8b87bd3ed": true,
 		"esbuild@0.28.1": true
+	},
+	"lint-staged": {
+		"**/*": "prettier --write --ignore-unknown"
 	}
 }
