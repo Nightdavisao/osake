@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import backIconSvg from "./svg/back.svg";
-import appMenuIconSvg from "./svg/ellipsis.svg";
-import forwardIconSvg from "./svg/forward.svg";
+import backIconSvg from "./extra/svg/back.svg";
+import appMenuIconSvg from "./extra/svg/ellipsis.svg";
+import forwardIconSvg from "./extra/svg/forward.svg";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { h } from "jsx-dom";
-import styleFixtures from "./fixtures.css";
+import styleFixtures from "./extra/css/fixtures.css";
 
 import { contextBridge, ipcRenderer } from "electron";
 
@@ -68,9 +68,7 @@ function buildNavHeader() {
 			<button
 				style={{ width: "28px", height: "28px", color: "white" }}
 				innerHTML={appMenuIconSvg}
-				onClick={(event: Event) =>
-					ipcRenderer.invoke("openAppMenu", event)
-				}
+				onClick={(event: Event) => ipcRenderer.invoke("openAppMenu", event)}
 			/>
 		</div>
 	);
@@ -107,10 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				}
 
 				if (!window.location.hostname.includes("classical")) {
-					if (
-						node.nodeName === "MAIN"
-						&& node instanceof HTMLElement
-					) {
+					if (node.nodeName === "MAIN" && node instanceof HTMLElement) {
 						node.style.marginTop = "env(titlebar-area-height, 0)";
 					}
 
@@ -137,15 +132,12 @@ contextBridge.executeInMainWorld({
 			console.log("starting to listen for musickit events", instance);
 
 			const ipcRenderer = window.AMWrapper.ipcRenderer;
-			const areWeClassical =
-				window.location.hostname.includes("classical");
+			const areWeClassical = window.location.hostname.includes("classical");
 
 			const MusicKit = window.MusicKit;
 
 			ipcRenderer.on("playpause", () => {
-				if (
-					instance.playbackState === MusicKit.PlaybackStates.playing
-				) {
+				if (instance.playbackState === MusicKit.PlaybackStates.playing) {
 					instance.pause();
 				} else {
 					instance.play();
@@ -187,9 +179,7 @@ contextBridge.executeInMainWorld({
 
 				try {
 					albumData =
-						data[0]["relationships"]["albums"]["data"][0][
-							"attributes"
-						];
+						data[0]["relationships"]["albums"]["data"][0]["attributes"];
 				} catch {
 					try {
 						albumData = data[0]["attributes"];
@@ -206,18 +196,11 @@ contextBridge.executeInMainWorld({
 					console.log("nowPlayingItemDidChange", data);
 					const mediaItem = data["item"];
 					if (mediaItem && mediaItem["attributes"]) {
-						ipcRenderer.send(
-							"nowPlaying",
-							mediaItem["attributes"] || {},
-						);
+						ipcRenderer.send("nowPlaying", mediaItem["attributes"] || {});
 
 						if (!areWeClassical) {
 							// regex kanged from musickit (this checks if the playing item is in the user's library)
-							if (
-								/^[a|i|l|p]{1}\.[a-zA-Z0-9]+$/.test(
-									mediaItem["id"],
-								)
-							) {
+							if (/^[a|i|l|p]{1}\.[a-zA-Z0-9]+$/.test(mediaItem["id"])) {
 								console.log("sending album data");
 								const libraryData = await instance.api.music(
 									`/v1/me/library/songs/${mediaItem["id"]}`,
@@ -226,10 +209,7 @@ contextBridge.executeInMainWorld({
 								const response = await libraryData["data"];
 								const albumData = getAlbumData(response);
 								console.log("albumData", albumData);
-								ipcRenderer.send(
-									"nowPlayingAlbumData",
-									albumData,
-								);
+								ipcRenderer.send("nowPlayingAlbumData", albumData);
 							} else {
 								console.log("sending album data");
 								const catalogData = await instance.api.music(
@@ -239,10 +219,7 @@ contextBridge.executeInMainWorld({
 								const response = await catalogData["data"];
 								const albumData = getAlbumData(response);
 								console.log("albumData", albumData);
-								ipcRenderer.send(
-									"nowPlayingAlbumData",
-									albumData,
-								);
+								ipcRenderer.send("nowPlayingAlbumData", albumData);
 							}
 						} else {
 							ipcRenderer.send("nowPlayingAlbumData", null);
@@ -313,14 +290,11 @@ contextBridge.executeInMainWorld({
 				const musicKitObjectHandler = {
 					get(target: any, prop: any) {
 						if (prop === "getInstance") {
-							const originalGetInstance =
-								target.getInstance.bind(target);
+							const originalGetInstance = target.getInstance.bind(target);
 							return () => wrapInstance(originalGetInstance());
 						}
 						const value = Reflect.get(target, prop, target);
-						return typeof value === "function" ?
-								value.bind(target)
-							:	value;
+						return typeof value === "function" ? value.bind(target) : value;
 					},
 					set(target: any, prop: any, value: any) {
 						return Reflect.set(target, prop, value, target);

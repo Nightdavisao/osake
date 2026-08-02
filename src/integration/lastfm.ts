@@ -5,8 +5,8 @@ import {
 	LastFmApiErrorCode,
 	LastFMClient,
 	LastFmClientError,
-} from "~/lastfm/client";
-import { LastFMScrubbler } from "~/lastfm/scrubbler";
+} from "~/lib/lastfm/client";
+import { LastFMScrubbler } from "~/lib/lastfm/scrubbler";
 import { PlayerSink } from "~/player";
 import { millisToSec, sanitizeName } from "~/utils";
 
@@ -109,8 +109,7 @@ export class LastFMIntegration implements PlayerIntegration {
 						this.currentTrack = {
 							albumArtist:
 								!this.isClassical ?
-									(albumData?.artistName
-									?? currentMetadata.artistName)
+									(albumData?.artistName ?? currentMetadata.artistName)
 								:	currentMetadata.composerName,
 							artistTrack:
 								!this.isClassical ?
@@ -119,9 +118,7 @@ export class LastFMIntegration implements PlayerIntegration {
 							albumName: currentMetadata.albumName,
 							trackName: currentMetadata.name,
 							trackNumber: currentMetadata.trackNumber,
-							duration: millisToSec(
-								currentMetadata.durationInMillis,
-							),
+							duration: millisToSec(currentMetadata.durationInMillis),
 						};
 
 						await this.scrubbler?.updateNowPlaying(
@@ -169,11 +166,7 @@ export class LastFMIntegration implements PlayerIntegration {
 					durationSecs > maxDuration ? maxDuration : durationSecs / 2;
 				//console.log(`last.fm: howMuchToPlay: ${howMuchToPlay}`)
 
-				if (
-					!this.wasScrobbled
-					&& !this.didFail
-					&& position > howMuchToPlay
-				) {
+				if (!this.wasScrobbled && !this.didFail && position > howMuchToPlay) {
 					if (!this.threadLocked) {
 						this.threadLocked = true;
 						this.logger.debug("acquiring lock");
@@ -183,10 +176,7 @@ export class LastFMIntegration implements PlayerIntegration {
 
 					try {
 						if (this.currentTrack) {
-							this.logger.info(
-								"scrobbling current track",
-								this.currentTrack,
-							);
+							this.logger.info("scrobbling current track", this.currentTrack);
 
 							const currentTimestamp = new Date();
 							const scrobblePromise = async (currentTrack: {
@@ -207,39 +197,28 @@ export class LastFMIntegration implements PlayerIntegration {
 									currentTrack.duration,
 								);
 
-								this.logger.debug(
-									"scrobbling response",
-									response,
-								);
+								this.logger.debug("scrobbling response", response);
 
 								if (
 									response
-									&& response["scrobbles"]["@attr"]["ignored"]
-										=== 1
+									&& response["scrobbles"]["@attr"]["ignored"] === 1
 								) {
 									this.wasIgnored = true;
 								}
 								this.wasScrobbled = true;
 
-								this.logger.debug(
-									"scrobbling response",
-									response,
-								);
+								this.logger.debug("scrobbling response", response);
 
 								this.player.emit("lfm:scrobble");
 							};
 							const timeout = new Promise((_resolve, reject) =>
 								setTimeout(
-									() =>
-										reject(new Error("Scrobble timed out")),
+									() => reject(new Error("Scrobble timed out")),
 									10_000,
 								),
 							);
 
-							await Promise.race([
-								scrobblePromise(this.currentTrack),
-								timeout,
-							]);
+							await Promise.race([scrobblePromise(this.currentTrack), timeout]);
 						} else {
 							throw new Error("current track is null/undefined");
 						}

@@ -1,8 +1,8 @@
 import log4js, { Logger } from "log4js";
 import { MKPlaybackState, MKRepeatMode } from "~/@types/enums";
 import { PlayerIntegration, TrackMetadata } from "~/@types/interfaces";
-import { LoopStatus, PlaybackStatus } from "~/mpris/enums";
-import { MPRISService } from "~/mpris/service";
+import { LoopStatus, PlaybackStatus } from "~/lib/mpris/enums";
+import { MPRISService } from "~/lib/mpris/service";
 import { PlayerSink } from "~/player";
 import { getArtworkUrl, microToSec, secToMicro, tmpSaveFile } from "~/utils";
 
@@ -73,8 +73,7 @@ export class MPRISIntegration implements PlayerIntegration {
 
 				const artworkPath = await tmpSaveFile(Buffer.from(buffer));
 				if (artworkPath) {
-					this.mprisMetadata["mpris:artUrl"] =
-						`file://${artworkPath}`;
+					this.mprisMetadata["mpris:artUrl"] = `file://${artworkPath}`;
 				}
 			}
 
@@ -85,8 +84,7 @@ export class MPRISIntegration implements PlayerIntegration {
 			"nowPlayingAlbumData",
 			async (albumData: { artistName: string } | null) => {
 				if (albumData && albumData.artistName) {
-					this.mprisMetadata["xesam:albumArtist"] =
-						albumData.artistName;
+					this.mprisMetadata["xesam:albumArtist"] = albumData.artistName;
 
 					this.mpris.setMetadata(this.mprisMetadata);
 				}

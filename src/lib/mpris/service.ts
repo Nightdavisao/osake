@@ -68,8 +68,7 @@ export class MPRISService extends EventEmitter {
 				return "b";
 			case typeof value === "number":
 				return "d";
-			case Array.isArray(value)
-				&& value.every(v => typeof v === "string"):
+			case Array.isArray(value) && value.every(v => typeof v === "string"):
 				return "as";
 			default:
 				return null;
