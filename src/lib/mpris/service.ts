@@ -118,4 +118,10 @@ export class MPRISService extends EventEmitter {
 		if (this.initialized && this.playerInterface)
 			this.playerInterface.Shuffle = shuffle;
 	}
+
+	setRate(rate: number) {
+		this.logger.debug("setting rate:", rate);
+		if (this.initialized && this.playerInterface)
+			this.playerInterface.Rate = rate;
+	}
 }

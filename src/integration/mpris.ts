@@ -32,6 +32,10 @@ export class MPRISIntegration implements PlayerIntegration {
 
 	private getInitOptions(): MPRISServiceOptions {
 		const appName = app.getName();
+		const defaultPlayerOptions = {
+			minimumRate: 1.0,
+			maximumRate: 1.0,
+		};
 
 		switch (this.state.currentWebsite) {
 			case "classical":
@@ -39,12 +43,17 @@ export class MPRISIntegration implements PlayerIntegration {
 					desktopEntry: appName,
 					busNameSuffix: `${appName}-classical`,
 					identity: "Apple Music Classical",
+					player: defaultPlayerOptions,
 				};
 			case "podcasts":
 				return {
 					desktopEntry: appName,
 					busNameSuffix: `${appName}-podcasts`,
 					identity: "Apple Podcasts",
+					player: {
+						minimumRate: 0.5,
+						maximumRate: 2.0,
+					},
 				};
 			case "music":
 			default:
@@ -52,6 +61,7 @@ export class MPRISIntegration implements PlayerIntegration {
 					desktopEntry: appName,
 					busNameSuffix: appName,
 					identity: "Apple Music",
+					player: defaultPlayerOptions,
 				};
 		}
 	}
@@ -83,6 +93,9 @@ export class MPRISIntegration implements PlayerIntegration {
 					this.player.setRepeat(MKRepeatMode.None);
 					break;
 			}
+		});
+		this.mpris.on("rate", rate => {
+			this.player.playbackRate = rate;
 		});
 
 		this.player.on("nowPlaying", async (metadata: TrackMetadata) => {
@@ -143,6 +156,7 @@ export class MPRISIntegration implements PlayerIntegration {
 			this.mpris.setPosition(secToMicro(position)),
 		);
 		this.player.on("shuffle", ({ mode }) => this.mpris.setShuffle(mode));
+		this.player.on("rate", rate => this.mpris.setRate(rate));
 
 		this.player.on("repeat", ({ mode }) => {
 			switch (mode) {
