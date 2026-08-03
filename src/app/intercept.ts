@@ -1,5 +1,9 @@
 import { testPatches } from "~/patcher";
 import { AM_BASE_URL } from "~/utils";
+import log4js from "log4js";
+
+const logger = log4js.getLogger("intercept");
+logger.level = "debug";
 
 export async function interceptFetchResponse(dbg: Electron.Debugger) {
 	dbg.attach("1.3");
@@ -9,10 +13,12 @@ export async function interceptFetchResponse(dbg: Electron.Debugger) {
 			{
 				urlPattern: `${AM_BASE_URL}/assets/*`,
 				requestStage: "Response",
+				resourceType: "Script",
 			},
 			{
 				urlPattern: `${AM_BASE_URL}/includes/js-cdn*`,
 				requestStage: "Response",
+				resourceType: "Script",
 			},
 		],
 	});
@@ -27,9 +33,9 @@ export async function interceptFetchResponse(dbg: Electron.Debugger) {
 				"Fetch.getResponseBody",
 				{ requestId },
 			);
+			logger.debug("url", params.request.url);
 
-			let text =
-				base64Encoded ? Buffer.from(body, "base64").toString() : body;
+			let text = base64Encoded ? Buffer.from(body, "base64").toString() : body;
 
 			const patched = await testPatches(text);
 

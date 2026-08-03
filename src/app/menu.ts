@@ -92,6 +92,12 @@ const createMenuTemplate = (
 				checked: state.currentWebsite === "classical",
 				click: () => state.switchWebsite("classical"),
 			},
+			{
+				label: state.locale.t("common.service.podcasts.label"),
+				type: "checkbox",
+				checked: state.currentWebsite === "podcasts",
+				click: () => state.switchWebsite("podcasts"),
+			},
 		],
 	},
 	{ type: "separator" },
