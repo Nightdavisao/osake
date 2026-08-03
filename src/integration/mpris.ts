@@ -43,7 +43,11 @@ export class MPRISIntegration implements PlayerIntegration {
 					desktopEntry: appName,
 					busNameSuffix: `${appName}-classical`,
 					identity: "Apple Music Classical",
-					player: defaultPlayerOptions,
+					player: {
+						...defaultPlayerOptions,
+						supportsShuffle: false,
+						supportsLoop: true,
+					},
 				};
 			case "podcasts":
 				return {
@@ -53,6 +57,8 @@ export class MPRISIntegration implements PlayerIntegration {
 					player: {
 						minimumRate: 0.5,
 						maximumRate: 2.0,
+						supportsShuffle: false,
+						supportsLoop: false,
 					},
 				};
 			case "music":
@@ -61,7 +67,11 @@ export class MPRISIntegration implements PlayerIntegration {
 					desktopEntry: appName,
 					busNameSuffix: appName,
 					identity: "Apple Music",
-					player: defaultPlayerOptions,
+					player: {
+						...defaultPlayerOptions,
+						supportsLoop: true,
+						supportsShuffle: true,
+					},
 				};
 		}
 	}

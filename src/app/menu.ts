@@ -10,69 +10,82 @@ import {
 
 export const playbackTemplate = (
 	state: AppState,
-): Electron.MenuItemConstructorOptions[] => [
-	{
-		id: "nowPlaying",
-		label:
-			state.playerSink?.metadata?.name ?
-				`${state.playerSink?.metadata.name} - ${state.playerSink.metadata.artistName}`
-			:	state.locale.t("common.notPlaying"),
-		enabled: false,
-	},
-	{ type: "separator" },
-	{
-		label: state.locale.t("playback.playPause"),
-		click: () => state.playerSink?.playPause(),
-	},
-	{
-		label: state.locale.t("playback.next"),
-		click: () => state.playerSink?.next(),
-	},
-	{
-		label: state.locale.t("playback.previous"),
-		click: () => {
-			state.playerSink?.previous();
+): Electron.MenuItemConstructorOptions[] => {
+	const playbackOptions = state.getAllowedPlaybackOptions();
+
+	const options: Electron.MenuItemConstructorOptions[] = [
+		{
+			label:
+				state.playerSink?.metadata?.name ?
+					`${state.playerSink?.metadata.name} - ${state.playerSink.metadata.artistName}`
+				:	state.locale.t("common.notPlaying"),
+			enabled: false,
 		},
-	},
-	{ type: "separator" },
-	{
-		label: state.locale.t("playback.shuffle"),
-		type: "checkbox",
-		checked: state.playerSink?.shuffleMode,
-		click: (menuItem: MenuItem) => {
-			state.playerSink?.setShuffle(menuItem.checked);
+		{ type: "separator" },
+		{
+			label: state.locale.t("playback.playPause"),
+			click: () => state.playerSink?.playPause(),
 		},
-	},
-	{
-		label: state.locale.t("playback.repeat.label"),
-		submenu: [
-			{
-				label: state.locale.t("common.none"),
-				type: "radio",
-				checked: state.playerSink?.repeatMode === MKRepeatMode.None,
-				click: () => {
-					state.playerSink?.setRepeat(MKRepeatMode.None);
-				},
+		{
+			label: state.locale.t("playback.next"),
+			click: () => state.playerSink?.next(),
+		},
+		{
+			label: state.locale.t("playback.previous"),
+			click: () => {
+				state.playerSink?.previous();
 			},
-			{
-				label: state.locale.t("playback.repeat.one"),
-				type: "radio",
-				checked: state.playerSink?.repeatMode === MKRepeatMode.One,
-				click: () => {
-					state.playerSink?.setRepeat(MKRepeatMode.One);
+		},
+		{ type: "separator" },
+		...(playbackOptions.shuffle ?
+			[
+				{
+					label: state.locale.t("playback.shuffle"),
+					type: "checkbox" as const,
+					checked: state.playerSink?.shuffleMode,
+					click: (menuItem: MenuItem) => {
+						state.playerSink?.setShuffle(menuItem.checked);
+					},
 				},
-			},
-			{
-				label: state.locale.t("playback.repeat.all"),
-				type: "radio",
-				checked: state.playerSink?.repeatMode === MKRepeatMode.All,
-				click: () => {
-					state.playerSink?.setRepeat(MKRepeatMode.All);
+			]
+		:	[]),
+		...(playbackOptions.repeat ?
+			[
+				{
+					label: state.locale.t("playback.repeat.label"),
+					submenu: [
+						{
+							label: state.locale.t("common.none"),
+							type: "radio" as const,
+							checked: state.playerSink?.repeatMode === MKRepeatMode.None,
+							click: () => {
+								state.playerSink?.setRepeat(MKRepeatMode.None);
+							},
+						},
+						{
+							label: state.locale.t("playback.repeat.one"),
+							type: "radio" as const,
+							checked: state.playerSink?.repeatMode === MKRepeatMode.One,
+							click: () => {
+								state.playerSink?.setRepeat(MKRepeatMode.One);
+							},
+						},
+						{
+							label: state.locale.t("playback.repeat.all"),
+							type: "radio" as const,
+							checked: state.playerSink?.repeatMode === MKRepeatMode.All,
+							click: () => {
+								state.playerSink?.setRepeat(MKRepeatMode.All);
+							},
+						},
+					],
 				},
-			},
-		],
-	},
-];
+			]
+		:	[]),
+	];
+
+	return options;
+};
 
 const createMenuTemplate = (
 	state: AppState,
