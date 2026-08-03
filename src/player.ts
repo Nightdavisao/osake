@@ -9,6 +9,7 @@ export class PlayerSink extends EventEmitter {
 	webContents: Electron.WebContents;
 	logger: Logger;
 	metadata: TrackMetadata | null;
+	_playbackRate: number;
 	playbackState: MKPlaybackState;
 	playbackTime: number;
 	shuffleMode: boolean;
@@ -28,15 +29,26 @@ export class PlayerSink extends EventEmitter {
 			"playbackTime",
 			"shuffle",
 			"repeat",
+			"rate",
 		];
 
 		this.metadata = null;
 		this.playbackState = MKPlaybackState.Stopped;
 		this.playbackTime = 0;
+		this._playbackRate = 1;
 		this.repeatMode = MKRepeatMode.None;
 		this.shuffleMode = false;
 
 		this.integrations = new Map();
+	}
+
+	get playbackRate() {
+		return this._playbackRate;
+	}
+
+	set playbackRate(value) {
+		this.dispatchIpcMessage("rate", value);
+		this._playbackRate = value;
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any

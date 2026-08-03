@@ -169,6 +169,9 @@ const setupEventListener = async (instance: any) => {
 	ipcRenderer.on("repeat", async (event, data) => {
 		instance.repeatMode = MusicKit.PlayerRepeatMode[data["mode"]];
 	});
+	ipcRenderer.on("rate", (event, data) => {
+		instance.playbackRate = data;
+	});
 
 	function getAlbumData(response: any) {
 		const data = response["data"];
@@ -246,6 +249,10 @@ const setupEventListener = async (instance: any) => {
 	instance.addEventListener("repeatModeDidChange", async () => {
 		const mode = MusicKit.PlayerRepeatMode[instance.repeatMode];
 		ipcRenderer.send("repeat", { mode });
+	});
+
+	instance.addEventListener("playbackRateDidChange", () => {
+		ipcRenderer.send("rate", instance.playbackRate);
 	});
 };
 

@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import dbus from "dbus-next";
-import { app } from "electron";
 import { MPRISService } from "./service";
 
 export class MediaPlayer2Interface extends dbus.interface.Interface {
@@ -24,8 +23,8 @@ export class MediaPlayer2Interface extends dbus.interface.Interface {
 		this._fullscreen = false;
 		this._canSetFullscreen = false;
 		this._hasTrackList = false;
-		this._identity = "Apple Music";
-		this._desktopEntry = app.name;
+		this._identity = service.options.identity;
+		this._desktopEntry = service.options.desktopEntry;
 		this._supportedUriSchemes = [];
 		this._supportedMimeTypes = [];
 
@@ -130,8 +129,8 @@ export class MediaPlayer2PlayerInterface extends dbus.interface.Interface {
 		this._metadata = {};
 		this._volume = 1;
 		this._position = 0;
-		this._minimumRate = 1;
-		this._maximumRate = 1;
+		this._minimumRate = service.options.player.minimumRate;
+		this._maximumRate = service.options.player.maximumRate;
 		this._canGoNext = true;
 		this._canGoPrevious = true;
 		this._canPlay = true;
@@ -203,6 +202,12 @@ export class MediaPlayer2PlayerInterface extends dbus.interface.Interface {
 		return this._rate;
 	}
 	set Rate(value: number) {
+		this.service.emit("rate", value);
+		MediaPlayer2PlayerInterface.emitPropertiesChanged(
+			this,
+			{ Rate: value },
+			[],
+		);
 		this._rate = value;
 	}
 
