@@ -1,0 +1,11 @@
+common:
+  none: "None"
+  notPlaying: "No music playing"
+  integrations: "Integrations"
+  show: "Show"
+  hide: "Hide"
+  service:
+    music:
+      label: "Music"
+    classical:
+      label: "Classical"

@@ -16,26 +16,57 @@ import {
 import { interceptFetchResponse } from "./intercept";
 import { buildTrayMenu, openAppMenu, setupTray } from "./menu";
 import { DEFAULT_WINDOW_TITLE, getIconFilenames } from "./utils";
+import {
+	AppLocale,
+	AppLocaleFactory,
+	DumbLocaleTFallback,
+	LocaleItem,
+} from "~/lib/i18n";
+import { isKnownStorefront, storefrontMapping } from "~/lib/i18n/mapping";
 
 const currentPlatform = os.platform();
 
 export class AppState {
 	logger: Logger = log4js.getLogger("appState");
+	localeFactory: AppLocaleFactory;
+	locale: AppLocale = new DumbLocaleTFallback();
 	mainWindow: BrowserWindow | null = null;
 	currentWebsite: WebsiteType = "music";
 	playerSink: PlayerSink | null = null;
-	config: AppConfig | null = null;
+	config: AppConfig;
 	tray: Tray | null = null;
 	isQuitting: boolean = false;
 
-	constructor() {}
-
-	async startup() {
+	constructor() {
+		this.logger.level = "debug";
 		this.config = new AppConfig(app, {
 			currentWebsite: "music",
 			enableDiscordRPC: false,
 			enableMPRIS: true,
 		});
+
+		const appLanguage = this.config.get("appLanguage");
+		const savedStorefrontId = this.config.get("storefrontId");
+
+		if (appLanguage) {
+			this.logger.info(`appLanguage: ${appLanguage}`);
+			this.localeFactory = new AppLocaleFactory(appLanguage);
+		} else {
+			if (isKnownStorefront(savedStorefrontId)) {
+				const localePreference = storefrontMapping[savedStorefrontId]
+					.preferredLanguage as LocaleItem;
+				this.logger.info("preferred locale is " + localePreference);
+
+				this.localeFactory = new AppLocaleFactory(localePreference);
+			} else {
+				this.localeFactory = new AppLocaleFactory();
+			}
+		}
+	}
+
+	async startup() {
+		this.locale = await this.localeFactory.getT();
+
 		this.currentWebsite = this.config.get("currentWebsite");
 		this.logger.info("current website is " + this.currentWebsite);
 		const options: Electron.BrowserWindowConstructorOptions = {
@@ -45,9 +76,7 @@ export class AppState {
 			autoHideMenuBar: true,
 			backgroundColor: "#1f1f1f",
 			webPreferences: {
-				preload: fileURLToPath(
-					new URL("./preload.cjs", import.meta.url),
-				),
+				preload: fileURLToPath(new URL("./preload.cjs", import.meta.url)),
 				nodeIntegration: false,
 			},
 			...(this.currentWebsite === "music" ?
@@ -81,10 +110,7 @@ export class AppState {
 		} catch (e) {
 			// imediate exit?
 			this.logger.debug("something wrong happened on startup", e);
-			dialog.showErrorBox(
-				"Something wrong happened!",
-				(e as Error).message,
-			);
+			dialog.showErrorBox("Something wrong happened!", (e as Error).message);
 
 			app.exit(1);
 		}
@@ -121,19 +147,12 @@ export class AppState {
 			}
 		});
 
-		this.mainWindow?.webContents.on(
-			"before-input-event",
-			(event, input) => {
-				if (
-					input.alt
-					&& input.shift
-					&& input.key.toLowerCase() === "i"
-				) {
-					this.mainWindow?.webContents.openDevTools();
-					return;
-				}
-			},
-		);
+		this.mainWindow?.webContents.on("before-input-event", (event, input) => {
+			if (input.alt && input.shift && input.key.toLowerCase() === "i") {
+				this.mainWindow?.webContents.openDevTools();
+				return;
+			}
+		});
 
 		this.mainWindow?.webContents.setWindowOpenHandler(() => {
 			return { action: "deny" };
@@ -174,9 +193,7 @@ export class AppState {
 
 	checkIntegrations() {
 		if (this.config?.get("enableMPRIS") && currentPlatform === "linux") {
-			this.playerSink?.addIntegration(
-				new MPRISIntegration(this.playerSink),
-			);
+			this.playerSink?.addIntegration(new MPRISIntegration(this.playerSink));
 		}
 
 		if (this.config?.get("enableDiscordRPC")) {

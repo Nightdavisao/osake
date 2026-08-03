@@ -1,0 +1,19 @@
+playback:
+  playPause: "&Play/Pause"
+  next: "&Next"
+  previous: "&Previous"
+  shuffle: "&Shuffle"
+  repeat:
+    label: "&Repeat"
+    one: "&Track"
+    all: "A&lbum/Playlist"
+
+menu:
+  switchService: "&Switch service"
+  integrations:
+    discord:
+      label: "Discord presence"
+  misc:
+    reload: "&Reload"
+    minimize: "&Minimize to tray"
+    quit: "&Quit app"

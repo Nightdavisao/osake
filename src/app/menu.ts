@@ -16,27 +16,27 @@ export const playbackTemplate = (
 		label:
 			state.playerSink?.metadata?.name ?
 				`${state.playerSink?.metadata.name} - ${state.playerSink.metadata.artistName}`
-			:	"No music playing",
+			:	state.locale.t("common.notPlaying"),
 		enabled: false,
 	},
 	{ type: "separator" },
 	{
-		label: "&Play/Pause",
+		label: state.locale.t("playback.playPause"),
 		click: () => state.playerSink?.playPause(),
 	},
 	{
-		label: "&Next",
+		label: state.locale.t("playback.next"),
 		click: () => state.playerSink?.next(),
 	},
 	{
-		label: "P&revious",
+		label: state.locale.t("playback.previous"),
 		click: () => {
 			state.playerSink?.previous();
 		},
 	},
 	{ type: "separator" },
 	{
-		label: "&Shuffle",
+		label: state.locale.t("playback.shuffle"),
 		type: "checkbox",
 		checked: state.playerSink?.shuffleMode,
 		click: (menuItem: MenuItem) => {
@@ -44,10 +44,10 @@ export const playbackTemplate = (
 		},
 	},
 	{
-		label: "&Repeat",
+		label: state.locale.t("playback.repeat.label"),
 		submenu: [
 			{
-				label: "None",
+				label: state.locale.t("common.none"),
 				type: "radio",
 				checked: state.playerSink?.repeatMode === MKRepeatMode.None,
 				click: () => {
@@ -55,7 +55,7 @@ export const playbackTemplate = (
 				},
 			},
 			{
-				label: "&Track",
+				label: state.locale.t("playback.repeat.one"),
 				type: "radio",
 				checked: state.playerSink?.repeatMode === MKRepeatMode.One,
 				click: () => {
@@ -63,7 +63,7 @@ export const playbackTemplate = (
 				},
 			},
 			{
-				label: "A&lbum/Playlist",
+				label: state.locale.t("playback.repeat.all"),
 				type: "radio",
 				checked: state.playerSink?.repeatMode === MKRepeatMode.All,
 				click: () => {
@@ -78,16 +78,16 @@ const createMenuTemplate = (
 	state: AppState,
 ): Electron.MenuItemConstructorOptions[] => [
 	{
-		label: "Switch website",
+		label: state.locale.t("menu.switchService"),
 		submenu: [
 			{
-				label: "Music",
+				label: state.locale.t("common.service.music.label"),
 				type: "checkbox",
 				checked: state.currentWebsite === "music",
 				click: () => state.switchWebsite("music"),
 			},
 			{
-				label: "Classical (!!!UNTESTED!!!)",
+				label: state.locale.t("common.service.classical.label"),
 				type: "checkbox",
 				checked: state.currentWebsite === "classical",
 				click: () => state.switchWebsite("classical"),
@@ -95,9 +95,9 @@ const createMenuTemplate = (
 		],
 	},
 	{ type: "separator" },
-	{ label: "Integrations", enabled: false },
+	{ label: state.locale.t("common.integrations"), enabled: false },
 	{
-		label: "&Discord rich presence",
+		label: state.locale.t("menu.integrations.discord.label"),
 		type: "checkbox",
 		checked: state.config?.get("enableDiscordRPC"),
 		click: (menuItem: MenuItem) => {
@@ -106,15 +106,15 @@ const createMenuTemplate = (
 	},
 	{ type: "separator" },
 	{
-		label: "Reload",
+		label: state.locale.t("menu.misc.reload"),
 		click: () => state.mainWindow?.webContents.reload(),
 	},
 	{
-		label: "Minimize to tray",
+		label: state.locale.t("menu.misc.minimize"),
 		click: () => state.toggleWindow(),
 	},
 	{
-		label: "Quit",
+		label: state.locale.t("menu.misc.quit"),
 		click: () => state.quitApp(),
 	},
 ];
@@ -134,11 +134,14 @@ export const buildTrayMenu = (state: AppState) => {
 		...playbackTemplate(state),
 		{ type: "separator" },
 		{
-			label: state.mainWindow?.isVisible() ? "Hide" : "Show",
+			label:
+				state.mainWindow?.isVisible() ?
+					state.locale.t("common.hide")
+				:	state.locale.t("common.show"),
 			click: () => state.toggleWindow(),
 		},
 		{
-			label: "Quit",
+			label: state.locale.t("menu.misc.quit"),
 			click: () => state.quitApp(),
 		},
 	]);

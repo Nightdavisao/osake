@@ -1,0 +1,19 @@
+playback:
+  playPause: "&Reproduzir/Pausar"
+  next: "&Próximo"
+  previous: "&Anterior"
+  shuffle: "A&leatório"
+  repeat:
+    label: "&Repetir"
+    one: "&Música"
+    all: "Ál&bum/Playlist"
+
+menu:
+  switchService: "&Alternar de serviço"
+  integrations:
+    discord:
+      label: "Presença do Discord"
+  misc:
+    reload: "&Recarregar"
+    minimize: "&Minimizar para a bandeja"
+    quit: "&Fechar aplicativo"
