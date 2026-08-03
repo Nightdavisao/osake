@@ -199,7 +199,9 @@ export class AppState {
 
 	checkIntegrations() {
 		if (this.config?.get("enableMPRIS") && currentPlatform === "linux") {
-			this.playerSink?.addIntegration(new MPRISIntegration(this.playerSink));
+			this.playerSink?.addIntegration(
+				new MPRISIntegration(this, this.playerSink),
+			);
 		}
 
 		if (this.config?.get("enableDiscordRPC")) {
@@ -213,6 +215,33 @@ export class AppState {
 		this.config?.set("currentWebsite", type);
 		app.relaunch();
 		app.exit(0);
+	}
+
+	getAllowedPlaybackOptions(): {
+		shuffle: boolean;
+		repeat: boolean;
+		rateSpeed: boolean;
+	} {
+		switch (this.currentWebsite) {
+			case "podcasts":
+				return {
+					shuffle: false,
+					repeat: false,
+					rateSpeed: true,
+				};
+			case "classical":
+				return {
+					shuffle: false,
+					repeat: true,
+					rateSpeed: false,
+				};
+			default:
+				return {
+					shuffle: true,
+					repeat: true,
+					rateSpeed: false,
+				};
+		}
 	}
 
 	toggleWindow() {

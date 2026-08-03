@@ -11,3 +11,9 @@ export enum MKRepeatMode {
 }
 
 export type WebsiteService = "music" | "classical" | "podcasts";
+
+export type MPRISServiceOptions = {
+	identity: string;
+	desktopEntry: string;
+	busNameSuffix: string;
+};

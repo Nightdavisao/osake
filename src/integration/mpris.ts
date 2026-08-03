@@ -1,25 +1,59 @@
 import log4js, { Logger } from "log4js";
-import { MKPlaybackState, MKRepeatMode } from "~/types/enums";
+import {
+	MKPlaybackState,
+	MKRepeatMode,
+	MPRISServiceOptions,
+} from "~/types/enums";
 import { PlayerIntegration, TrackMetadata } from "~/types/interfaces";
 import { LoopStatus, PlaybackStatus } from "~/lib/mpris/enums";
 import { MPRISService } from "~/lib/mpris/service";
 import { PlayerSink } from "~/player";
 import { getArtworkUrl, microToSec, secToMicro, tmpSaveFile } from "~/utils";
+import { AppState } from "~/app/state";
+import { app } from "electron";
 
 export class MPRISIntegration implements PlayerIntegration {
 	shortName: string = "mpris";
 
+	state: AppState;
 	logger: Logger;
 	player: PlayerSink;
 	mpris: MPRISService;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	mprisMetadata: Record<string, any> = {};
 
-	constructor(player: PlayerSink) {
+	constructor(state: AppState, player: PlayerSink) {
+		this.state = state;
 		this.logger = log4js.getLogger("mprisIntegration");
 		this.logger.level = "debug";
 		this.player = player;
-		this.mpris = new MPRISService();
+		this.mpris = new MPRISService(this.getInitOptions());
+	}
+
+	private getInitOptions(): MPRISServiceOptions {
+		const appName = app.getName();
+
+		switch (this.state.currentWebsite) {
+			case "classical":
+				return {
+					desktopEntry: appName,
+					busNameSuffix: `${appName}-classical`,
+					identity: "Apple Music Classical",
+				};
+			case "podcasts":
+				return {
+					desktopEntry: appName,
+					busNameSuffix: `${appName}-podcasts`,
+					identity: "Apple Podcasts",
+				};
+			case "music":
+			default:
+				return {
+					desktopEntry: appName,
+					busNameSuffix: appName,
+					identity: "Apple Music",
+				};
+		}
 	}
 
 	load(): void {
@@ -125,6 +159,6 @@ export class MPRISIntegration implements PlayerIntegration {
 		});
 	}
 	unload(): void {
-		throw new Error("Method not implemented.");
+		this.mpris.unload();
 	}
 }
