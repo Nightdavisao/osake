@@ -110,6 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
 					}
 
 					if (node.id === "scrollable-page") {
+						console.log("adding draggable app region");
 						const region = buildDraggableRegion();
 						region.style.setProperty("app-region", "drag");
 						region.style.zIndex = "99";

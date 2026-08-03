@@ -1,5 +1,5 @@
 import log4js, { Logger } from "log4js";
-import { MKPlaybackState, WebsiteType } from "~/@types/enums";
+import { MKPlaybackState, WebsiteService } from "~/@types/enums";
 import { PlayerIntegration } from "~/@types/interfaces";
 import {
 	LastFmApiErrorCode,
@@ -32,11 +32,11 @@ export class LastFMIntegration implements PlayerIntegration {
 	didFail: boolean;
 	threadLocked: boolean;
 	lastPlayingStatusTimestamp: Date | null;
-	activeWebsite: WebsiteType;
+	activeWebsite: WebsiteService;
 	isClassical: boolean;
 	constructor(
 		player: PlayerSink,
-		activeWebsite: WebsiteType,
+		activeWebsite: WebsiteService,
 		client: LastFMClient,
 	) {
 		this.logger = log4js.getLogger("lastfmIntegration");

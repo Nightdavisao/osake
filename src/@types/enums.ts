@@ -10,4 +10,4 @@ export enum MKRepeatMode {
 	All = "all",
 }
 
-export type WebsiteType = "music" | "classical";
+export type WebsiteService = "music" | "classical" | "podcasts";

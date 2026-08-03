@@ -2,7 +2,7 @@ import { app, BrowserWindow, dialog, ipcMain, Tray } from "electron";
 import log4js, { Logger } from "log4js";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
-import { MKPlaybackState, WebsiteType } from "~/@types/enums";
+import { MKPlaybackState, WebsiteService } from "~/@types/enums";
 import { TrackMetadata } from "~/@types/interfaces";
 import { AppConfig } from "~/config";
 import { DiscordIntegration } from "~/integration/discord";
@@ -12,10 +12,15 @@ import {
 	AM_BASE_URL,
 	AM_CLASSICAL_BASE_URL,
 	getAppleGeolocation,
+	PODCASTS_BASE_URL,
 } from "~/utils";
 import { interceptFetchResponse } from "./intercept";
 import { buildTrayMenu, openAppMenu, setupTray } from "./menu";
-import { DEFAULT_WINDOW_TITLE, getIconFilenames } from "./utils";
+import {
+	DEFAULT_WINDOW_TITLE,
+	getIconFilenames,
+	isLiquidGlassDesign,
+} from "./utils";
 import {
 	AppLocale,
 	AppLocaleFactory,
@@ -31,7 +36,7 @@ export class AppState {
 	localeFactory: AppLocaleFactory;
 	locale: AppLocale = new DumbLocaleTFallback();
 	mainWindow: BrowserWindow | null = null;
-	currentWebsite: WebsiteType = "music";
+	currentWebsite: WebsiteService = "music";
 	playerSink: PlayerSink | null = null;
 	config: AppConfig;
 	tray: Tray | null = null;
@@ -79,17 +84,15 @@ export class AppState {
 				preload: fileURLToPath(new URL("./preload.cjs", import.meta.url)),
 				nodeIntegration: false,
 			},
-			...(this.currentWebsite === "music" ?
-				{ titleBarStyle: "hidden" }
-			:	{ titleBarStyle: "default" }),
-			...(this.currentWebsite === "music" ?
+			...(isLiquidGlassDesign(this.currentWebsite) ?
 				{
+					titleBarStyle: "hidden",
 					titleBarOverlay: {
 						symbolColor: "#fff",
 						color: "#1f1f1f",
 					},
 				}
-			:	{}),
+			:	{ titleBarStyle: "default" }),
 		};
 		Object.assign(options, this.config.get("winBounds"));
 
@@ -115,12 +118,20 @@ export class AppState {
 			app.exit(1);
 		}
 
-		const currentWebsiteURL =
-			this.config.get("currentWebsite") === "music" ?
-				AM_BASE_URL
-			:	AM_CLASSICAL_BASE_URL;
+		let currentWebsiteURL = AM_BASE_URL;
+		switch (this.config.get("currentWebsite") as WebsiteService) {
+			case "classical":
+				currentWebsiteURL = AM_CLASSICAL_BASE_URL;
+				break;
+			case "podcasts":
+				currentWebsiteURL = PODCASTS_BASE_URL;
+				break;
+			default:
+				currentWebsiteURL = AM_BASE_URL;
+				break;
+		}
 
-		const geo = await getAppleGeolocation(this.config);
+		const geo = await getAppleGeolocation(this.config, currentWebsiteURL);
 
 		let amUrl = currentWebsiteURL;
 		if (geo && typeof geo === "string") {
@@ -201,7 +212,7 @@ export class AppState {
 		}
 	}
 
-	switchWebsite(type: WebsiteType) {
+	switchWebsite(type: WebsiteService) {
 		if (this.currentWebsite === type) return;
 
 		this.config?.set("currentWebsite", type);

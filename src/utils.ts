@@ -5,6 +5,7 @@ import { AppConfig } from "~/config";
 
 export const AM_BASE_URL = "https://beta.music.apple.com";
 export const AM_CLASSICAL_BASE_URL = "https://classical.music.apple.com";
+export const PODCASTS_BASE_URL = "https://podcasts.apple.com";
 
 export const PLAYBACK_STATES = {
 	"0": "none",
@@ -124,12 +125,15 @@ class CustomError extends Error {
 	}
 }
 
-export async function getAppleGeolocation(config: AppConfig): Promise<string> {
+export async function getAppleGeolocation(
+	config: AppConfig,
+	url: string,
+): Promise<string> {
 	const storefrontId = config.get("storefrontId");
 
 	if (!storefrontId) {
 		try {
-			const amResponse = await fetch(AM_BASE_URL);
+			const amResponse = await fetch(url);
 			const setCookieResponse = amResponse.headers.get("Set-Cookie");
 			if (setCookieResponse) {
 				const cookie = parseCookie(setCookieResponse);
