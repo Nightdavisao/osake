@@ -3,6 +3,8 @@ import backIconSvg from "~/extra/svg/back.svg";
 import appMenuIconSvg from "~/extra/svg/ellipsis.svg";
 import forwardIconSvg from "~/extra/svg/forward.svg";
 import styleFixtures from "~/extra/css/fixtures.css";
+import classicalFixtures from "~/extra/css/classicalOnly.css";
+import liquidFixtures from "~/extra/css/liquidOnly.css";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { h } from "jsx-dom";
 
@@ -91,27 +93,6 @@ const observer = new MutationObserver((mutationsList: MutationRecord[]) => {
 					document.querySelector(".app-container")?.prepend(region);
 				}
 			}
-
-			if (!isClassical) {
-				const mainElement = document.querySelector("main");
-
-				if (mainElement) {
-					mainElement.style.marginTop = "env(titlebar-area-height, 0)";
-				}
-			} else {
-				// a little more difficult to do something reliable here, but we can try
-				const playerBar = document.querySelector(
-					'div[data-testid="player-bar"]',
-				);
-
-				if (playerBar && playerBar instanceof HTMLElement) {
-					playerBar.style.top = "env(titlebar-area-height, 0)";
-				}
-
-				if (scrollablePage && scrollablePage instanceof HTMLElement) {
-					scrollablePage.style.marginTop = `calc(48px + env(titlebar-area-height, 0))`;
-				}
-			}
 			observer.disconnect();
 			return;
 		}
@@ -120,7 +101,11 @@ const observer = new MutationObserver((mutationsList: MutationRecord[]) => {
 
 document.addEventListener("DOMContentLoaded", () => {
 	const styleElement = document.createElement("style");
-	styleElement.innerText = styleFixtures;
+	if (!isClassical) {
+		styleElement.innerText = styleFixtures + "\n\n" + liquidFixtures;
+	} else {
+		styleElement.innerText = styleFixtures + "\n\n" + classicalFixtures;
+	}
 	document.head.appendChild(styleElement);
 
 	observer.observe(document.documentElement, {

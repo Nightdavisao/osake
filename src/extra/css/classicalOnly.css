@@ -1,0 +1,13 @@
+/* lyrics/queue */
+div[role="complementary"] {
+	margin-top: env(titlebar-area-height, 0) !important;
+	height: unset !important;
+}
+
+div[data-testid="player-bar"] {
+	top: env(titlebar-area-height, 0) !important;
+}
+
+#scrollable-page {
+	margin-top: calc(48px + env(titlebar-area-height, 0)) !important;
+}

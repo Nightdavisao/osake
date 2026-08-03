@@ -1,0 +1,12 @@
+/* lyrics/queue (fixme: queue needs a better style) */
+div[role="complementary"] > div:first-child {
+	margin-top: env(titlebar-area-height, 0) !important;
+}
+
+.side-panel-content {
+	height: calc(100dvh - 90px) !important;
+}
+
+main {
+	margin-top: env(titlebar-area-height, 0) !important;
+}
