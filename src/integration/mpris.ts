@@ -1,6 +1,6 @@
 import log4js, { Logger } from "log4js";
-import { MKPlaybackState, MKRepeatMode } from "~/@types/enums";
-import { PlayerIntegration, TrackMetadata } from "~/@types/interfaces";
+import { MKPlaybackState, MKRepeatMode } from "~/types/enums";
+import { PlayerIntegration, TrackMetadata } from "~/types/interfaces";
 import { LoopStatus, PlaybackStatus } from "~/lib/mpris/enums";
 import { MPRISService } from "~/lib/mpris/service";
 import { PlayerSink } from "~/player";

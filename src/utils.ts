@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import { file } from "tmp-promise";
-import { TrackMetadata } from "~/@types/interfaces";
+import { TrackMetadata } from "~/types/interfaces";
 import { AppConfig } from "~/config";
 
 export const AM_BASE_URL = "https://beta.music.apple.com";
@@ -66,9 +66,12 @@ export function sanitizeName(albumName: string) {
 export function getArtworkUrl(metadata: TrackMetadata) {
 	if (metadata.artwork) {
 		if (metadata.artwork.width && metadata.artwork.height) {
-			return metadata.artwork.url
-				.replace("{w}", metadata.artwork.width.toString())
-				.replace("{h}", metadata.artwork.height.toString());
+			const formattedUrl = metadata.artwork.url
+				.replace(/\{w\}/g, metadata.artwork.width.toString())
+				.replace(/\{h\}/g, metadata.artwork.height.toString())
+				.replace(/\{f\}/g, "jpg"); // podcasts
+
+			return formattedUrl;
 		}
 		return metadata.artwork.url;
 	}

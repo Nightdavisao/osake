@@ -4,7 +4,7 @@ import fs from "fs";
 import log4js, { Logger } from "log4js";
 import { EventEmitter } from "node:events";
 import { join } from "node:path";
-import { AppOptions } from "~/@types/interfaces";
+import { AppOptions } from "~/types/interfaces";
 
 export class AppConfig extends EventEmitter {
 	app: App;

@@ -1,7 +1,7 @@
 import { app } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { WebsiteService } from "~/@types/enums";
+import { WebsiteService } from "~/types/enums";
 
 export const DEFAULT_WINDOW_TITLE = "Apple Music";
 
