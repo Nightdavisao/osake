@@ -16,11 +16,6 @@ div[slot="secondary-actions"] {
 	margin-right: 5px;
 }
 
-/* lyrics/queue (fixme: queue needs a better style) */
-div[role="complementary"] > div:first-child {
-	margin-top: env(titlebar-area-height, 0);
-}
-
 /* translation/transliteration button on immersive mode */
 .lyrics-translation-menu {
 	margin-top: env(titlebar-area-height, 0);
