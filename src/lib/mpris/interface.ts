@@ -138,24 +138,33 @@ export class MediaPlayer2PlayerInterface extends dbus.interface.Interface {
 		this._canSeek = true;
 		this._canControl = true;
 
+		const properties: Record<string, any> = {
+			PlaybackStatus: { signature: "s", access: "read" },
+			Rate: { signature: "d", access: "readwrite" },
+			Metadata: { signature: "a{sv}", access: "read" },
+			Volume: { signature: "d", access: "readwrite" },
+			Position: { signature: "x", access: "read" },
+			MinimumRate: { signature: "d", access: "read" },
+			MaximumRate: { signature: "d", access: "read" },
+			CanGoNext: { signature: "b", access: "read" },
+			CanGoPrevious: { signature: "b", access: "read" },
+			CanPlay: { signature: "b", access: "read" },
+			CanPause: { signature: "b", access: "read" },
+			CanSeek: { signature: "b", access: "read" },
+			CanControl: { signature: "b", access: "read" },
+		};
+
+		if (service.options.player.supportsLoop) {
+			this._loopStatus = "None";
+			properties.LoopStatus = { signature: "s", access: "readwrite" };
+		}
+		if (service.options.player.supportsShuffle) {
+			this._shuffle = false;
+			properties.Shuffle = { signature: "b", access: "readwrite" };
+		}
+
 		MediaPlayer2PlayerInterface.configureMembers({
-			properties: {
-				PlaybackStatus: { signature: "s", access: "read" },
-				LoopStatus: { signature: "s", access: "readwrite" },
-				Rate: { signature: "d", access: "readwrite" },
-				Shuffle: { signature: "b", access: "readwrite" },
-				Metadata: { signature: "a{sv}", access: "read" },
-				Volume: { signature: "d", access: "readwrite" },
-				Position: { signature: "x", access: "read" },
-				MinimumRate: { signature: "d", access: "read" },
-				MaximumRate: { signature: "d", access: "read" },
-				CanGoNext: { signature: "b", access: "read" },
-				CanGoPrevious: { signature: "b", access: "read" },
-				CanPlay: { signature: "b", access: "read" },
-				CanPause: { signature: "b", access: "read" },
-				CanSeek: { signature: "b", access: "read" },
-				CanControl: { signature: "b", access: "read" },
-			},
+			properties,
 			methods: {
 				Next: { inSignature: "", outSignature: "" },
 				Previous: { inSignature: "", outSignature: "" },

@@ -19,5 +19,7 @@ export type MPRISServiceOptions = {
 	player: {
 		minimumRate: number;
 		maximumRate: number;
+		supportsShuffle: boolean;
+		supportsLoop: boolean;
 	};
 };
