@@ -1,6 +1,6 @@
 import { BrowserWindow, Menu, MenuItem, Tray } from "electron";
 import path from "node:path";
-import { MKRepeatMode } from "~/@types/enums";
+import { MKRepeatMode } from "~/types/enums";
 import { AppState } from "./state";
 import {
 	DEFAULT_WINDOW_TITLE,

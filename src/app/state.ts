@@ -2,12 +2,13 @@ import { app, BrowserWindow, dialog, ipcMain, Tray } from "electron";
 import log4js, { Logger } from "log4js";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
-import { MKPlaybackState, WebsiteService } from "~/@types/enums";
-import { TrackMetadata } from "~/@types/interfaces";
+import { MKPlaybackState, WebsiteService } from "~/types/enums";
+import { TrackMetadata } from "~/types/interfaces";
 import { AppConfig } from "~/config";
 import { DiscordIntegration } from "~/integration/discord";
 import { MPRISIntegration } from "~/integration/mpris";
 import { PlayerSink } from "~/player";
+
 import {
 	AM_BASE_URL,
 	AM_CLASSICAL_BASE_URL,
@@ -16,11 +17,7 @@ import {
 } from "~/utils";
 import { interceptFetchResponse } from "./intercept";
 import { buildTrayMenu, openAppMenu, setupTray } from "./menu";
-import {
-	DEFAULT_WINDOW_TITLE,
-	getIconFilenames,
-	isLiquidGlassDesign,
-} from "./utils";
+import { DEFAULT_WINDOW_TITLE, getIconFilenames } from "./utils";
 import {
 	AppLocale,
 	AppLocaleFactory,
@@ -81,18 +78,16 @@ export class AppState {
 			autoHideMenuBar: true,
 			backgroundColor: "#1f1f1f",
 			webPreferences: {
+				// sandbox is temporarily disabled until i find a better way of bundling renderer code on preload
+				sandbox: false,
 				preload: fileURLToPath(new URL("./preload.cjs", import.meta.url)),
 				nodeIntegration: false,
 			},
-			...(isLiquidGlassDesign(this.currentWebsite) ?
-				{
-					titleBarStyle: "hidden",
-					titleBarOverlay: {
-						symbolColor: "#fff",
-						color: "#1f1f1f",
-					},
-				}
-			:	{ titleBarStyle: "default" }),
+			titleBarStyle: "hidden",
+			titleBarOverlay: {
+				symbolColor: "#fff",
+				color: "#1f1f1f",
+			},
 		};
 		Object.assign(options, this.config.get("winBounds"));
 
@@ -140,7 +135,7 @@ export class AppState {
 		this.mainWindow.loadURL(amUrl);
 	}
 
-	private setupWindowEventListeners() {
+	private async setupWindowEventListeners() {
 		ipcMain.handle("openAppMenu", event => openAppMenu(this, event));
 
 		this.mainWindow?.on("page-title-updated", e => e.preventDefault());

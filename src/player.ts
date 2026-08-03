@@ -1,8 +1,8 @@
 import { IpcMain, IpcMainEvent } from "electron";
 import log4js, { Logger } from "log4js";
 import { EventEmitter } from "node:events";
-import { MKPlaybackState, MKRepeatMode } from "~/@types/enums";
-import { PlayerIntegration, TrackMetadata } from "~/@types/interfaces";
+import { MKPlaybackState, MKRepeatMode } from "~/types/enums";
+import { PlayerIntegration, TrackMetadata } from "~/types/interfaces";
 
 export class PlayerSink extends EventEmitter {
 	ipcMain: IpcMain;
@@ -100,8 +100,7 @@ export class PlayerSink extends EventEmitter {
 		});
 		this.on(
 			"playbackState",
-			(data: { state: MKPlaybackState }) =>
-				(this.playbackState = data.state),
+			(data: { state: MKPlaybackState }) => (this.playbackState = data.state),
 		);
 		this.on(
 			"playbackTime",

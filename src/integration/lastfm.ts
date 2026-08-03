@@ -1,6 +1,6 @@
 import log4js, { Logger } from "log4js";
-import { MKPlaybackState, WebsiteService } from "~/@types/enums";
-import { PlayerIntegration } from "~/@types/interfaces";
+import { MKPlaybackState, WebsiteService } from "~/types/enums";
+import { PlayerIntegration } from "~/types/interfaces";
 import {
 	LastFmApiErrorCode,
 	LastFMClient,

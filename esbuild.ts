@@ -25,11 +25,20 @@ const electron: esbuild.BuildOptions = {
 };
 
 const preload: esbuild.BuildOptions = {
-	entryPoints: ["src/preload.tsx"],
+	entryPoints: ["src/preload.ts"],
 	outfile: "dist/preload.cjs",
 	format: "cjs",
+	external: ["electron"],
 	platform: "node",
 	target: "node22",
+};
+
+const renderer: esbuild.BuildOptions = {
+	entryPoints: ["src/inject.tsx"],
+	outfile: "dist/inject.js",
+	format: "iife",
+	platform: "browser",
+	sourcemap: false,
 };
 
 const configs: esbuild.BuildOptions[] = [
@@ -40,6 +49,10 @@ const configs: esbuild.BuildOptions[] = [
 	{
 		...common,
 		...preload,
+	},
+	{
+		...common,
+		...renderer,
 	},
 ];
 
