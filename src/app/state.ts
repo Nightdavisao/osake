@@ -17,7 +17,7 @@ import {
 } from "~/utils";
 import { interceptFetchResponse } from "./intercept";
 import { buildTrayMenu, openAppMenu, setupTray } from "./menu";
-import { DEFAULT_WINDOW_TITLE, getIconFilenames } from "./utils";
+import { getServiceIconFilenames, getServiceName } from "./utils";
 import {
 	AppLocale,
 	AppLocaleFactory,
@@ -33,7 +33,7 @@ export class AppState {
 	localeFactory: AppLocaleFactory;
 	locale: AppLocale = new DumbLocaleTFallback();
 	mainWindow: BrowserWindow | null = null;
-	currentWebsite: WebsiteService = "music";
+	currentService: WebsiteService = "music";
 	playerSink: PlayerSink | null = null;
 	config: AppConfig;
 	tray: Tray | null = null;
@@ -69,10 +69,10 @@ export class AppState {
 	async startup() {
 		this.locale = await this.localeFactory.getT();
 
-		this.currentWebsite = this.config.get("currentWebsite");
-		this.logger.info("current website is " + this.currentWebsite);
+		this.currentService = this.config.get("currentWebsite");
+		this.logger.info("current service is " + this.currentService);
 		const options: Electron.BrowserWindowConstructorOptions = {
-			icon: getIconFilenames(this.config.get("currentWebsite")).trayPng,
+			icon: getServiceIconFilenames(this.config.get("currentWebsite")).trayPng,
 			width: 800,
 			height: 600,
 			autoHideMenuBar: true,
@@ -169,7 +169,7 @@ export class AppState {
 		this.playerSink?.on("nowPlaying", (metadata: TrackMetadata) => {
 			if (metadata) {
 				this.mainWindow?.setTitle(
-					`${metadata.name} - ${metadata.artistName} — ${DEFAULT_WINDOW_TITLE}`,
+					`${metadata.name} - ${metadata.artistName} — ${getServiceName(this.currentService)}`,
 				);
 			}
 		});
@@ -180,15 +180,15 @@ export class AppState {
 					case MKPlaybackState.Paused:
 					case MKPlaybackState.Playing:
 						this.mainWindow?.setTitle(
-							`${this.playerSink?.metadata?.name} - ${this.playerSink?.metadata?.artistName} — ${DEFAULT_WINDOW_TITLE}`,
+							`${this.playerSink?.metadata?.name} - ${this.playerSink?.metadata?.artistName} — ${getServiceName(this.currentService)}`,
 						);
 						break;
 					default:
-						this.mainWindow?.setTitle(DEFAULT_WINDOW_TITLE);
+						this.mainWindow?.setTitle(getServiceName(this.currentService));
 						break;
 				}
 			} else {
-				this.mainWindow?.setTitle(DEFAULT_WINDOW_TITLE);
+				this.mainWindow?.setTitle(getServiceName(this.currentService));
 			}
 			buildTrayMenu(this);
 		});
@@ -210,7 +210,7 @@ export class AppState {
 	}
 
 	switchWebsite(type: WebsiteService) {
-		if (this.currentWebsite === type) return;
+		if (this.currentService === type) return;
 
 		this.config?.set("currentWebsite", type);
 		app.relaunch();
@@ -222,7 +222,7 @@ export class AppState {
 		repeat: boolean;
 		rateSpeed: boolean;
 	} {
-		switch (this.currentWebsite) {
+		switch (this.currentService) {
 			case "podcasts":
 				return {
 					shuffle: false,

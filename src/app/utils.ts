@@ -3,8 +3,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { WebsiteService } from "~/types/enums";
 
-export const DEFAULT_WINDOW_TITLE = "Apple Music";
-
 export const getResourcesPath = () =>
 	!app.isPackaged ?
 		path.dirname(fileURLToPath(import.meta.url))
@@ -13,7 +11,7 @@ export const getResourcesPath = () =>
 export const isLiquidGlassDesign = (website: WebsiteService) =>
 	website === "music" || website === "podcasts";
 
-export const getIconFilenames = (website: WebsiteService) => {
+export const getServiceIconFilenames = (website: WebsiteService) => {
 	// png used for tray (better compatibility), svg for in-app logo
 	switch (website) {
 		case "classical":
@@ -31,5 +29,16 @@ export const getIconFilenames = (website: WebsiteService) => {
 				trayPng: "am-icon.png",
 				rendererSvg: "am-icon.svg",
 			};
+	}
+};
+
+export const getServiceName = (website: WebsiteService) => {
+	switch (website) {
+		case "classical":
+			return "Apple Music Classical";
+		case "podcasts":
+			return "Apple Podcasts";
+		default:
+			return "Apple Music";
 	}
 };

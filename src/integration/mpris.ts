@@ -37,7 +37,7 @@ export class MPRISIntegration implements PlayerIntegration {
 			maximumRate: 1.0,
 		};
 
-		switch (this.state.currentWebsite) {
+		switch (this.state.currentService) {
 			case "classical":
 				return {
 					desktopEntry: appName,

@@ -3,9 +3,9 @@ import path from "node:path";
 import { MKRepeatMode } from "~/types/enums";
 import { AppState } from "./state";
 import {
-	DEFAULT_WINDOW_TITLE,
-	getIconFilenames,
+	getServiceIconFilenames,
 	getResourcesPath,
+	getServiceName,
 } from "./utils";
 
 export const playbackTemplate = (
@@ -96,19 +96,19 @@ const createMenuTemplate = (
 			{
 				label: state.locale.t("common.service.music.label"),
 				type: "checkbox",
-				checked: state.currentWebsite === "music",
+				checked: state.currentService === "music",
 				click: () => state.switchWebsite("music"),
 			},
 			{
 				label: state.locale.t("common.service.classical.label"),
 				type: "checkbox",
-				checked: state.currentWebsite === "classical",
+				checked: state.currentService === "classical",
 				click: () => state.switchWebsite("classical"),
 			},
 			{
 				label: state.locale.t("common.service.podcasts.label"),
 				type: "checkbox",
-				checked: state.currentWebsite === "podcasts",
+				checked: state.currentService === "podcasts",
 				click: () => state.switchWebsite("podcasts"),
 			},
 		],
@@ -168,8 +168,8 @@ export const buildTrayMenu = (state: AppState) => {
 };
 
 export function setupTray(state: AppState) {
-	const { trayPng } = getIconFilenames(state.currentWebsite);
+	const { trayPng } = getServiceIconFilenames(state.currentService);
 	state.tray = new Tray(path.join(getResourcesPath(), "assets", trayPng));
-	state.tray.setToolTip(DEFAULT_WINDOW_TITLE);
+	state.tray.setToolTip(getServiceName(state.currentService));
 	buildTrayMenu(state);
 }
