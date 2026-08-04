@@ -3,6 +3,7 @@ playback:
   next: "&Next"
   previous: "&Previous"
   shuffle: "&Shuffle"
+  playbackRate: "Playback rate"
   repeat:
     label: "&Repeat"
     one: "&Track"

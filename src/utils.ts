@@ -157,3 +157,23 @@ export async function getAppleGeolocation(
 
 	return storefrontId;
 }
+
+export function truncateString(str: string, maxLength: number) {
+	return str.length > maxLength ? str.slice(0, maxLength) + "..." : str;
+}
+
+export function getFirstArtist(str: string, when: number = -1) {
+	const artists = str.split(/\s*&\s*/g);
+	if (when > 0 && artists.length > 1) {
+		if (str.length > when) {
+			return artists[0];
+		}
+		return truncateString(artists[0], when);
+	}
+
+	if (when > 0) {
+		return truncateString(str, when);
+	}
+
+	return str;
+}

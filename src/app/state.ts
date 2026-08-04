@@ -263,6 +263,7 @@ export class AppState {
 
 		this.playerSink?.on("shuffle", () => buildTrayMenu(this));
 		this.playerSink?.on("repeat", () => buildTrayMenu(this));
+		this.playerSink?.on("rate", () => buildTrayMenu(this));
 	}
 
 	checkIntegrations() {

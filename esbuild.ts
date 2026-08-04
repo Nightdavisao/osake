@@ -92,14 +92,6 @@ const preload: esbuild.BuildOptions = {
 	plugins: [rawImportPlugin()],
 };
 
-// const renderer: esbuild.BuildOptions = {
-// 	entryPoints: ["src/app/renderer/inject.tsx"],
-// 	outfile: "dist/inject.js",
-// 	format: "iife",
-// 	platform: "browser",
-// 	sourcemap: false,
-// };
-
 const configs: esbuild.BuildOptions[] = [
 	{
 		...common,
@@ -109,10 +101,6 @@ const configs: esbuild.BuildOptions[] = [
 		...common,
 		...preload,
 	},
-	// {
-	// 	...common,
-	// 	...renderer,
-	// },
 ];
 
 await fs.cp("assets", "dist/assets", { recursive: true });

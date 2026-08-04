@@ -7,6 +7,7 @@ import {
 	getResourcesPath,
 	getServiceName,
 } from "./utils";
+import { getFirstArtist, truncateString } from "~/utils";
 
 export const playbackTemplate = (
 	state: AppState,
@@ -17,7 +18,7 @@ export const playbackTemplate = (
 		{
 			label:
 				state.playerSink?.metadata?.name ?
-					`${state.playerSink?.metadata.name} - ${state.playerSink.metadata.artistName}`
+					`${truncateString(state.playerSink?.metadata.name, 32)} - ${getFirstArtist(state.playerSink.metadata.artistName, 24)}`
 				:	state.locale.t("common.notPlaying"),
 			enabled: false,
 		},
@@ -37,6 +38,51 @@ export const playbackTemplate = (
 			},
 		},
 		{ type: "separator" },
+		...(playbackOptions.rateSpeed ?
+			[
+				{
+					label: state.locale.t("playback.playbackRate"),
+					submenu: [
+						{
+							label: "0.8x",
+							type: "radio" as const,
+							checked: state.playerSink?.playbackRate === 0.8,
+							click: () => (state.playerSink!.playbackRate = 0.8),
+						},
+						{
+							label: "1x",
+							type: "radio" as const,
+							checked: state.playerSink?.playbackRate === 1,
+							click: () => (state.playerSink!.playbackRate = 1),
+						},
+						{
+							label: "1.3x",
+							type: "radio" as const,
+							checked: state.playerSink?.playbackRate === 1.3,
+							click: () => (state.playerSink!.playbackRate = 1.3),
+						},
+						{
+							label: "1.5x",
+							type: "radio" as const,
+							checked: state.playerSink?.playbackRate === 1.5,
+							click: () => (state.playerSink!.playbackRate = 1.5),
+						},
+						{
+							label: "1.8x",
+							type: "radio" as const,
+							checked: state.playerSink?.playbackRate === 1.8,
+							click: () => (state.playerSink!.playbackRate = 1.8),
+						},
+						{
+							label: "2x",
+							type: "radio" as const,
+							checked: state.playerSink?.playbackRate === 2,
+							click: () => (state.playerSink!.playbackRate = 2),
+						},
+					],
+				},
+			]
+		:	[]),
 		...(playbackOptions.shuffle ?
 			[
 				{

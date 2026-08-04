@@ -1,5 +1,4 @@
 import { testPatches } from "~/patcher";
-import { AM_BASE_URL } from "~/utils";
 import log4js from "log4js";
 
 const logger = log4js.getLogger("intercept");
@@ -11,12 +10,12 @@ export async function interceptFetchResponse(dbg: Electron.Debugger) {
 	await dbg.sendCommand("Fetch.enable", {
 		patterns: [
 			{
-				urlPattern: `${AM_BASE_URL}/assets/*`,
+				urlPattern: `*://*.apple.com/assets/*`,
 				requestStage: "Response",
 				resourceType: "Script",
 			},
 			{
-				urlPattern: `${AM_BASE_URL}/includes/js-cdn*`,
+				urlPattern: `*://*.apple.com/includes/js-cdn*`,
 				requestStage: "Response",
 				resourceType: "Script",
 			},
