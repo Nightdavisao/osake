@@ -4,6 +4,7 @@ import {
 	dialog,
 	ipcMain,
 	nativeTheme,
+	session,
 	shell,
 	Tray,
 } from "electron";
@@ -121,6 +122,19 @@ export class AppState {
 
 		this.mainWindow = new BrowserWindow(options);
 		this.playerSink = new PlayerSink(ipcMain, this.mainWindow.webContents);
+		session.defaultSession.webRequest.onBeforeRequest(
+			{
+				urls: [
+					"*://*.apple.com/assets/mt-metricskit*",
+					"*://*.apple.com/static-commerce/js*",
+				],
+			},
+			(details, callback) => {
+				this.logger.debug("will block metrics url", details.url);
+				callback({ cancel: true });
+			},
+		);
+
 		const promises = [
 			this.checkIntegrations(),
 			this.playerSink.initialize(),

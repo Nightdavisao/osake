@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { webFrame } from "electron";
-import injectedCode from "./app/renderer/inject.tsx?raw";
+import injectedCode from "./app/renderer/inject.ts?raw";
 import { contextBridge, ipcRenderer } from "electron";
 
 contextBridge.exposeInMainWorld("AMWrapper", {

@@ -16,6 +16,11 @@ const PATCHES = [
 		replace:
 			"$1if (this.currentItem && this.currentItem.isCloudItem) return;$2",
 	},
+	{
+		name: "Do not debounce event dispatch",
+		find: /setTimeout\s*\(\s*\(\)\s*=>\s*(document\.dispatchEvent\([a-z]\))\)/,
+		replace: "$1",
+	},
 ];
 
 export async function testPatches(script: string) {
