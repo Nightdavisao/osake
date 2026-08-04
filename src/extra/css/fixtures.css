@@ -20,6 +20,11 @@ div[data-testid="native-cta"] {
 	display: none !important;
 }
 
+/* "Also avaliable on iTunes Store" */
+.tracklist-footer__native-cta-wrapper {
+	display: none !important;
+}
+
 /* the floating buttons on the right upper corner */
 div[slot="secondary-actions"] {
 	position: fixed;

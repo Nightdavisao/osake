@@ -4,6 +4,7 @@ import {
 	dialog,
 	ipcMain,
 	nativeTheme,
+	shell,
 	Tray,
 } from "electron";
 import log4js, { Logger } from "log4js";
@@ -214,7 +215,8 @@ export class AppState {
 			}
 		});
 
-		this.mainWindow?.webContents.setWindowOpenHandler(() => {
+		this.mainWindow?.webContents.setWindowOpenHandler(details => {
+			shell.openExternal(details.url);
 			return { action: "deny" };
 		});
 	}
