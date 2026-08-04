@@ -120,11 +120,11 @@ export const secToMillis = (seconds: number) =>
 	Math.round(Number(seconds) * 1e3);
 export const millisToSec = (milliseconds: number) => Number(milliseconds) / 1e3;
 
-class CustomError extends Error {
+class OsakeError extends Error {
 	constructor(message: string, cause: Error) {
 		super(message);
 		this.cause = cause;
-		this.name = "CustomError";
+		this.name = "OsakeError";
 	}
 }
 
@@ -148,7 +148,7 @@ export async function getAppleGeolocation(
 				}
 			}
 		} catch (e) {
-			throw new CustomError(
+			throw new OsakeError(
 				"Unable to get geo cookie from Apple Music",
 				e as Error,
 			);
