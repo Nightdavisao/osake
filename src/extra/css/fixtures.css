@@ -1,3 +1,14 @@
+/* osake specific */
+@media (prefers-color-scheme: light) {
+	.osake-icon.adaptive {
+		color: #1f1f1f;
+	}
+}
+
+.osake-icon {
+	color: white;
+}
+
 /* hide apple music's logo */
 .logo {
 	display: none !important;

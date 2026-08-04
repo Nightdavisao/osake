@@ -1,4 +1,11 @@
-import { app, BrowserWindow, dialog, ipcMain, Tray } from "electron";
+import {
+	app,
+	BrowserWindow,
+	dialog,
+	ipcMain,
+	nativeTheme,
+	Tray,
+} from "electron";
 import log4js, { Logger } from "log4js";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
@@ -74,10 +81,26 @@ export class AppState {
 		}
 	}
 
+	getTitleBarOverlayOptions() {
+		return nativeTheme.shouldUseDarkColors ?
+				{
+					symbolColor: "#fff",
+					color: "#1f1f1f",
+				}
+			:	{
+					color: "#fff",
+					symbolColor: "#1f1f1f",
+				};
+	}
+
 	async startup() {
 		this.ensureSingleInstance();
-		this.locale = await this.localeFactory.getT();
+		const themeOverride = this.config.get("themeOverride");
+		if (["system", "light", "dark"].includes(themeOverride as string)) {
+			nativeTheme.themeSource = themeOverride;
+		}
 
+		this.locale = await this.localeFactory.getT();
 		this.currentService = this.config.get("currentWebsite");
 		this.logger.info("current service is " + this.currentService);
 		const options: Electron.BrowserWindowConstructorOptions = {
@@ -93,10 +116,7 @@ export class AppState {
 				nodeIntegration: false,
 			},
 			titleBarStyle: "hidden",
-			titleBarOverlay: {
-				symbolColor: "#fff",
-				color: "#1f1f1f",
-			},
+			titleBarOverlay: this.getTitleBarOverlayOptions(),
 		};
 		Object.assign(options, this.config.get("winBounds"));
 
@@ -146,6 +166,16 @@ export class AppState {
 
 	private async setupWindowEventListeners() {
 		ipcMain.handle("openAppMenu", event => openAppMenu(this, event));
+
+		nativeTheme.on("updated", () => {
+			this.mainWindow?.setTitleBarOverlay(this.getTitleBarOverlayOptions());
+
+			if (nativeTheme.themeSource !== "system") {
+				this.config.set("themeOverride", nativeTheme.themeSource);
+			} else {
+				this.config.delete("themeOverride");
+			}
+		});
 
 		app.on("second-instance", () => {
 			if (this.mainWindow) {

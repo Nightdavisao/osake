@@ -1,4 +1,4 @@
-import { BrowserWindow, Menu, MenuItem, Tray } from "electron";
+import { BrowserWindow, Menu, MenuItem, nativeTheme, Tray } from "electron";
 import path from "node:path";
 import { MKRepeatMode } from "~/types/enums";
 import { AppState } from "./state";
@@ -110,6 +110,34 @@ const createMenuTemplate = (
 				type: "checkbox",
 				checked: state.currentService === "podcasts",
 				click: () => state.switchService("podcasts"),
+			},
+		],
+	},
+	{
+		label: state.locale.t("menu.options.label"),
+		submenu: [
+			{
+				label: state.locale.t("menu.options.theme.label"),
+				submenu: [
+					{
+						label: state.locale.t("menu.options.theme.system"),
+						type: "radio",
+						checked: nativeTheme.themeSource === "system",
+						click: () => (nativeTheme.themeSource = "system"),
+					},
+					{
+						label: state.locale.t("menu.options.theme.light"),
+						type: "radio",
+						checked: nativeTheme.themeSource === "light",
+						click: () => (nativeTheme.themeSource = "light"),
+					},
+					{
+						label: state.locale.t("menu.options.theme.dark"),
+						type: "radio",
+						checked: nativeTheme.themeSource === "dark",
+						click: () => (nativeTheme.themeSource = "dark"),
+					},
+				],
 			},
 		],
 	},
