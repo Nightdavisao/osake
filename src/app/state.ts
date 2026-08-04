@@ -96,7 +96,7 @@ export class AppState {
 	async startup() {
 		this.ensureSingleInstance();
 		const themeOverride = this.config.get("themeOverride");
-		if (["system", "light", "dark"].includes(themeOverride as string)) {
+		if (["light", "dark"].includes(themeOverride as string)) {
 			nativeTheme.themeSource = themeOverride;
 		}
 
