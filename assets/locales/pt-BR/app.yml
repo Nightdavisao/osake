@@ -13,6 +13,13 @@ menu:
   integrations:
     discord:
       label: "Presença do Discord"
+  options:
+    label: "Opções"
+    theme:
+      label: "Tema do aplicativo"
+      system: "Padrão do sistema"
+      light: "Claro"
+      dark: "Escuro"
   misc:
     reload: "&Recarregar"
     minimize: "&Minimizar para a bandeja"

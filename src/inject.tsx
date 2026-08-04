@@ -14,7 +14,6 @@ function buildNavHeader() {
 	const iconButtonStyle = {
 		width: "15px",
 		height: "15px",
-		color: "white",
 	};
 
 	return (
@@ -35,18 +34,21 @@ function buildNavHeader() {
 					flexGrow: "1",
 				}}>
 				<button
+					class="osake-icon adaptive"
 					style={iconButtonStyle}
 					innerHTML={backIconSvg}
 					onClick={() => history.back()}
 				/>
 				<button
+					class="osake-icon adaptive"
 					style={iconButtonStyle}
 					innerHTML={forwardIconSvg}
 					onClick={() => history.forward()}
 				/>
 			</div>
 			<button
-				style={{ width: "28px", height: "28px", color: "white" }}
+				class="osake-icon adaptive"
+				style={{ width: "28px", height: "28px" }}
 				innerHTML={appMenuIconSvg}
 				onClick={(event: Event) => window.AMWrapper.openAppMenu(event)}
 			/>
