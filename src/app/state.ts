@@ -64,7 +64,16 @@ export class AppState {
 		}
 	}
 
+	ensureSingleInstance() {
+		const lock = app.requestSingleInstanceLock();
+
+		if (!lock) {
+			app.quit();
+		}
+	}
+
 	async startup() {
+		this.ensureSingleInstance();
 		this.locale = await this.localeFactory.getT();
 
 		this.currentWebsite = this.config.get("currentWebsite");
@@ -131,6 +140,21 @@ export class AppState {
 
 	private setupWindowEventListeners() {
 		ipcMain.handle("openAppMenu", event => openAppMenu(this, event));
+
+		app.on("second-instance", () => {
+			if (this.mainWindow) {
+				if (this.mainWindow.isMinimized()) {
+					this.mainWindow.restore();
+					this.mainWindow.focus();
+					return;
+				}
+
+				if (!this.mainWindow.isVisible()) {
+					this.mainWindow.show();
+					return;
+				}
+			}
+		});
 
 		this.mainWindow?.on("page-title-updated", e => e.preventDefault());
 		this.mainWindow?.on("close", event => {
