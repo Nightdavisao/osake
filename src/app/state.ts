@@ -233,7 +233,7 @@ export class AppState {
 		}
 	}
 
-	switchWebsite(type: WebsiteService) {
+	switchService(type: WebsiteService) {
 		if (this.currentService === type) return;
 
 		this.config?.set("currentWebsite", type);
