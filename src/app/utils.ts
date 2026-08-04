@@ -15,26 +15,21 @@ export const isLiquidGlassDesign = (website: WebsiteService) =>
 
 export const getIconFilenames = (website: WebsiteService) => {
 	// png used for tray (better compatibility), svg for in-app logo
-	let trayPng = "am-icon.png";
-	let rendererSvg = "am-icon.svg";
-
 	switch (website) {
 		case "classical":
-			trayPng = "am-classical-icon.png";
-			rendererSvg = "am-classical-icon.svg";
-			break;
+			return {
+				trayPng: "am-classical-icon.png",
+				rendererSvg: "am-classical-icon.svg",
+			};
 		case "podcasts":
-			trayPng = "podcasts.png";
-			rendererSvg = "podcasts.svg";
-			break;
+			return {
+				trayPng: "podcasts.png",
+				rendererSvg: "podcasts.svg",
+			};
 		default:
-			trayPng = "am-icon.png";
-			rendererSvg = "am-icon.svg";
-			break;
+			return {
+				trayPng: "am-icon.png",
+				rendererSvg: "am-icon.svg",
+			};
 	}
-
-	return {
-		trayPng,
-		rendererSvg,
-	};
 };
