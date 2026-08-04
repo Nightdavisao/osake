@@ -111,8 +111,6 @@ export class AppState {
 			autoHideMenuBar: true,
 			backgroundColor: "#1f1f1f",
 			webPreferences: {
-				// sandbox is temporarily disabled until i find a better way of bundling renderer code on preload
-				sandbox: false,
 				preload: fileURLToPath(new URL("./preload.cjs", import.meta.url)),
 				nodeIntegration: false,
 			},

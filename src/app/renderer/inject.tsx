@@ -7,57 +7,54 @@ import classicalFixtures from "~/extra/css/classicalOnly.css";
 import liquidFixtures from "~/extra/css/liquidOnly.css";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { h } from "jsx-dom";
+import { isClassical, shouldObserveChildMutations } from "./utils";
 
-const isClassical = window.location.hostname.includes("classical");
+const iconButtonStyle = {
+	width: "15px",
+	height: "15px",
+};
 
-function buildNavHeader() {
-	const iconButtonStyle = {
-		width: "15px",
-		height: "15px",
-	};
-
-	return (
+const buildNavHeader = () => (
+	<div
+		style={{
+			zIndex: "5",
+			alignItems: "center",
+			marginTop: "4px",
+			padding: "18px",
+			display: "flex",
+			gap: "8px",
+		}}>
 		<div
 			style={{
-				zIndex: "5",
-				alignItems: "center",
-				marginTop: "4px",
-				padding: "18px",
 				display: "flex",
+				alignItems: "center",
 				gap: "8px",
+				flexGrow: "1",
 			}}>
-			<div
-				style={{
-					display: "flex",
-					alignItems: "center",
-					gap: "8px",
-					flexGrow: "1",
-				}}>
-				<button
-					class="osake-icon adaptive"
-					style={iconButtonStyle}
-					innerHTML={backIconSvg}
-					onClick={() => history.back()}
-				/>
-				<button
-					class="osake-icon adaptive"
-					style={iconButtonStyle}
-					innerHTML={forwardIconSvg}
-					onClick={() => history.forward()}
-				/>
-			</div>
 			<button
 				class="osake-icon adaptive"
-				style={{ width: "28px", height: "28px" }}
-				innerHTML={appMenuIconSvg}
-				onClick={(event: Event) => window.AMWrapper.openAppMenu(event)}
+				style={iconButtonStyle}
+				innerHTML={backIconSvg}
+				onClick={() => history.back()}
+			/>
+			<button
+				class="osake-icon adaptive"
+				style={iconButtonStyle}
+				innerHTML={forwardIconSvg}
+				onClick={() => history.forward()}
 			/>
 		</div>
-	);
-}
+		<button
+			class="osake-icon adaptive"
+			style={{ width: "28px", height: "28px" }}
+			innerHTML={appMenuIconSvg}
+			onClick={(event: Event) => window.AMWrapper.openAppMenu(event)}
+		/>
+	</div>
+);
 
 function buildDraggableRegion() {
-	return (
+	const region = (
 		<div
 			style={{
 				height: "env(titlebar-area-height, 0)" as any,
@@ -66,40 +63,77 @@ function buildDraggableRegion() {
 			}}
 		/>
 	);
+	region.style.setProperty("app-region", "drag");
+	region.style.zIndex = "99";
+	return region;
 }
 
-const observer = new MutationObserver((mutationsList: MutationRecord[]) => {
-	for (const mutation of mutationsList) {
-		if (mutation.type !== "attributes") continue;
+const injectedElements = {
+	navigationHeader: false,
+	scrollablePage: false,
+};
 
-		if (mutation.attributeName === "hydrated") {
-			console.log("hydrated");
+const childObserver = new MutationObserver(
+	(mutationsList: MutationRecord[]) => {
+		for (const mutation of mutationsList) {
+			if (mutation.type !== "childList") continue;
 
-			const navigationHeader = document.querySelector(".navigation__header");
+			mutation.addedNodes.forEach(node => {
+				if (!(node instanceof HTMLElement)) return;
 
-			if (navigationHeader) {
-				console.log("adding the nav header to nav header", navigationHeader);
-
-				navigationHeader.parentNode?.prepend(buildNavHeader());
-			}
-			const scrollablePage = document.querySelector("#scrollable-page");
-
-			if (scrollablePage) {
-				console.log("adding draggable app region");
-				const region = buildDraggableRegion();
-				region.style.setProperty("app-region", "drag");
-				region.style.zIndex = "99";
-				if (!isClassical) {
-					scrollablePage.prepend(region);
-				} else {
-					document.querySelector(".app-container")?.prepend(region);
+				if (node.classList.contains("navigation__header")) {
+					node.parentNode?.prepend(buildNavHeader());
+					injectedElements.navigationHeader = true;
 				}
+
+				if (node.id === "scrollable-page") {
+					console.log("adding draggable app region");
+					document
+						.querySelector(".app-container")
+						?.prepend(buildDraggableRegion());
+					injectedElements.scrollablePage = true;
+				}
+			});
+
+			if (Object.values(injectedElements).every(Boolean)) {
+				childObserver.disconnect();
 			}
-			observer.disconnect();
-			return;
 		}
-	}
-});
+	},
+);
+
+const hydratedObserver = new MutationObserver(
+	(mutationsList: MutationRecord[]) => {
+		for (const mutation of mutationsList) {
+			if (mutation.type !== "attributes") continue;
+
+			if (mutation.attributeName === "hydrated") {
+				console.log(
+					"should not observe mutations, just inject elements right away",
+				);
+				const scrollablePage = document.getElementById("scrollable-page");
+
+				if (scrollablePage) {
+					console.log("adding draggable app region");
+					document
+						.querySelector(".app-container")
+						?.prepend(buildDraggableRegion());
+					injectedElements.scrollablePage = true;
+				}
+
+				const navigationHeader =
+					document.getElementsByClassName("navigation__header")[0];
+
+				if (navigationHeader) {
+					console.log("found navigation header", navigationHeader.parentNode);
+					navigationHeader.parentNode?.prepend(buildNavHeader());
+					injectedElements.navigationHeader = true;
+				}
+				hydratedObserver.disconnect();
+			}
+		}
+	},
+);
 
 document.addEventListener("DOMContentLoaded", () => {
 	const styleElement = document.createElement("style");
@@ -110,18 +144,25 @@ document.addEventListener("DOMContentLoaded", () => {
 	}
 	document.head.appendChild(styleElement);
 
-	observer.observe(document.documentElement, {
-		attributes: true,
-	});
+	if (shouldObserveChildMutations()) {
+		const bodyContainer = document.getElementsByClassName("body-container")[0];
+
+		childObserver.observe(bodyContainer, {
+			childList: true,
+			subtree: true,
+		});
+	} else {
+		hydratedObserver.observe(document.documentElement, {
+			attributes: true,
+		});
+	}
 });
+
+const ipcRenderer = window.AMWrapper.ipcRenderer;
+const MusicKit = window.MusicKit;
 
 const setupEventListener = async (instance: any) => {
 	console.log("starting to listen for musickit events", instance);
-
-	const ipcRenderer = window.AMWrapper.ipcRenderer;
-	const areWeClassical = window.location.hostname.includes("classical");
-
-	const MusicKit = window.MusicKit;
 
 	ipcRenderer.on("playpause", () => {
 		if (instance.playbackState === MusicKit.PlaybackStates.playing) {
@@ -183,7 +224,7 @@ const setupEventListener = async (instance: any) => {
 		if (mediaItem && mediaItem["attributes"]) {
 			ipcRenderer.send("nowPlaying", mediaItem["attributes"] || {});
 
-			if (!areWeClassical) {
+			if (!isClassical) {
 				// regex kanged from musickit (this checks if the playing item is in the user's library)
 				if (/^[a|i|l|p]{1}\.[a-zA-Z0-9]+$/.test(mediaItem["id"])) {
 					console.log("sending album data");
@@ -291,5 +332,3 @@ Object.defineProperty(window, "MusicKit", {
 		_musicKit = new Proxy(mk, musicKitObjectHandler);
 	},
 });
-
-console.log("hello");
