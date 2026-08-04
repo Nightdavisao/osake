@@ -3,6 +3,7 @@ playback:
   next: "&Próximo"
   previous: "&Anterior"
   shuffle: "A&leatório"
+  playbackRate: "Velocidade"
   repeat:
     label: "&Repetir"
     one: "&Música"

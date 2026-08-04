@@ -47,55 +47,55 @@ export class PlayerSink extends EventEmitter {
 	}
 
 	set playbackRate(value) {
-		this.dispatchIpcMessage("rate", value);
+		this.dispatch("rate", value);
 		this._playbackRate = value;
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	dispatchIpcMessage(channel: string, data: any = null) {
+	dispatch(channel: string, data: any = null) {
 		this.webContents.send(channel, data);
 	}
 
 	playPause() {
-		this.dispatchIpcMessage("playpause");
+		this.dispatch("playpause");
 	}
 
 	play() {
-		this.dispatchIpcMessage("playbackState", { state: "playing" });
+		this.dispatch("playbackState", { state: "playing" });
 	}
 
 	pause() {
-		this.dispatchIpcMessage("playbackState", { state: "paused" });
+		this.dispatch("playbackState", { state: "paused" });
 	}
 
 	stop() {
-		this.dispatchIpcMessage("playbackState", { state: "stopped" });
+		this.dispatch("playbackState", { state: "stopped" });
 	}
 
 	next() {
-		this.dispatchIpcMessage("nextTrack");
+		this.dispatch("nextTrack");
 	}
 
 	previous() {
-		this.dispatchIpcMessage("previousTrack");
+		this.dispatch("previousTrack");
 	}
 
 	setShuffle(mode: boolean) {
 		if (typeof mode !== "boolean" || this.shuffleMode === mode) return;
 
 		this.logger.debug("setShuffle", mode);
-		this.dispatchIpcMessage("shuffle", { mode });
+		this.dispatch("shuffle", { mode });
 	}
 
 	setRepeat(mode: MKRepeatMode) {
 		if (typeof mode !== "string" || this.repeatMode === mode) return;
 
 		this.logger.debug("setRepeat", mode);
-		this.dispatchIpcMessage("repeat", { mode });
+		this.dispatch("repeat", { mode });
 	}
 
 	seek(time: number) {
-		this.dispatchIpcMessage("playbackTime", { progress: time });
+		this.dispatch("playbackTime", { progress: time });
 	}
 
 	initialize() {
