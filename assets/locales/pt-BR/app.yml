@@ -9,7 +9,7 @@ playback:
     all: "Ál&bum/Playlist"
 
 menu:
-  switchService: "&Alternar de serviço"
+  switchService: "&Alternar serviço"
   integrations:
     discord:
       label: "Presença do Discord"
