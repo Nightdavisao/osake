@@ -149,6 +149,7 @@ const createMenuTemplate = (
 		checked: state.config?.get("enableDiscordRPC"),
 		click: (menuItem: MenuItem) => {
 			state.config?.set("enableDiscordRPC", menuItem.checked);
+			state.playerSink?.toggleIntegration("discord");
 		},
 	},
 	{ type: "separator" },

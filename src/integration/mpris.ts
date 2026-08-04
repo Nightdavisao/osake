@@ -14,6 +14,7 @@ import { app } from "electron";
 
 export class MPRISIntegration implements PlayerIntegration {
 	shortName: string = "mpris";
+	isLoaded: boolean = false;
 
 	state: AppState;
 	logger: Logger;
@@ -181,8 +182,10 @@ export class MPRISIntegration implements PlayerIntegration {
 					break;
 			}
 		});
+		this.isLoaded = true;
 	}
 	unload(): void {
 		this.mpris.unload();
+		this.isLoaded = false;
 	}
 }
