@@ -171,4 +171,17 @@ export class PlayerSink extends EventEmitter {
 		this.logger.debug(`disabling integration ${shortName}`);
 		await integration?.unload();
 	}
+
+	async toggleIntegration(shortName: string) {
+		const integration = this.integrations.get(shortName);
+		this.logger.debug(
+			`toggling integration ${shortName}`,
+			integration?.isLoaded,
+		);
+		if (integration) {
+			return integration.isLoaded ?
+					this.disableIntegration(shortName)
+				:	this.enableIntegration(shortName);
+		}
+	}
 }

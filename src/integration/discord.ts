@@ -17,6 +17,7 @@ const PODCASTS_APP_ID = "1533912042732519445";
 
 export class DiscordIntegration implements PlayerIntegration {
 	shortName: string = "discord";
+	isLoaded: boolean = false;
 
 	state: AppState;
 	logger: Logger;
@@ -83,6 +84,7 @@ export class DiscordIntegration implements PlayerIntegration {
 			this.createReconnectInterval();
 		});
 		await this.connect();
+		this.isLoaded = true;
 	}
 
 	async connect() {
@@ -183,5 +185,6 @@ export class DiscordIntegration implements PlayerIntegration {
 			this.client.destroy();
 			if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout);
 		}
+		this.isLoaded = false;
 	}
 }
