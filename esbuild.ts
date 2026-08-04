@@ -35,6 +35,7 @@ export function rawImportPlugin(): Plugin {
 					},
 					jsxFactory: "h",
 					jsxFragment: "Fragment",
+					tsconfig: "./tsconfig.json",
 				});
 
 				if (result.errors.length > 0) {
