@@ -39,7 +39,7 @@ export class DiscordIntegration implements PlayerIntegration {
 	}
 
 	private getClientId() {
-		switch (this.state.currentWebsite) {
+		switch (this.state.currentService) {
 			case "classical":
 				return CLASSICAL_APP_ID;
 			case "podcasts":
@@ -173,7 +173,7 @@ export class DiscordIntegration implements PlayerIntegration {
 						this.playerSink?.playbackTime ? this.playerSink?.playbackTime : 0,
 					)),
 			instance: false,
-			statusDisplayType: this.state.currentWebsite !== "podcasts" ? 1 : 0, // ACTIVITY_STATE
+			statusDisplayType: this.state.currentService !== "podcasts" ? 1 : 0, // ACTIVITY_STATE
 		});
 	}
 
