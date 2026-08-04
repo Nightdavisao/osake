@@ -167,13 +167,13 @@ export class DiscordIntegration implements PlayerIntegration {
 			startTimestamp:
 				this.playerSink?.playbackTime ?
 					Date.now() - secToMillis(this.playerSink.playbackTime)
-				:	undefined,
+				:	Date.now(),
 			endTimestamp:
 				Date.now()
 				+ (metadata.durationInMillis
-					- secToMillis(
-						this.playerSink?.playbackTime ? this.playerSink?.playbackTime : 0,
-					)),
+					- (this.playerSink?.playbackTime ?
+						secToMillis(this.playerSink?.playbackTime)
+					:	0)),
 			instance: false,
 			statusDisplayType: this.state.currentService !== "podcasts" ? 1 : 0, // ACTIVITY_STATE
 		});

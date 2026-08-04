@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { webFrame } from "electron";
-import fs from "fs";
-import path from "path";
+import injectedCode from "./app/renderer/inject.tsx?raw";
 import { contextBridge, ipcRenderer } from "electron";
 
 contextBridge.exposeInMainWorld("AMWrapper", {
@@ -16,10 +15,5 @@ contextBridge.exposeInMainWorld("AMWrapper", {
 	},
 	openAppMenu: (event: Event) => ipcRenderer.invoke("openAppMenu", event),
 } as AMWrapper);
-
-const injectedCode = fs.readFileSync(
-	path.join(__dirname, "inject.js"),
-	"utf-8",
-);
 
 webFrame.executeJavaScript(injectedCode);
