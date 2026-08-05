@@ -75,6 +75,9 @@ export const setupEventListener = async (instance: any) => {
 	ipcRenderer.on("rate", (event, data) => {
 		instance.playbackRate = data;
 	});
+	ipcRenderer.on("volume", (event, data) => {
+		instance.volume = data;
+	});
 
 	function getAlbumData(response: any) {
 		const data = response["data"];
@@ -158,5 +161,9 @@ export const setupEventListener = async (instance: any) => {
 
 	instance.addEventListener("playbackRateDidChange", () => {
 		ipcRenderer.send("rate", instance.playbackRate);
+	});
+
+	instance.addEventListener("playbackVolumeDidChange", () => {
+		ipcRenderer.send("volume", instance.volume);
 	});
 };

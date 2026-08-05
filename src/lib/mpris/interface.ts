@@ -249,6 +249,12 @@ export class MediaPlayer2PlayerInterface extends dbus.interface.Interface {
 		return this._volume;
 	}
 	set Volume(value: number) {
+		this.service.emit("volume", value);
+		MediaPlayer2PlayerInterface.emitPropertiesChanged(
+			this,
+			{ Volume: value },
+			[],
+		);
 		this._volume = value;
 	}
 
