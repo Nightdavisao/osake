@@ -1,4 +1,4 @@
-/* hide apple music's logo */
+/* hide service logo */
 .logo {
 	display: none !important;
 }
@@ -12,13 +12,6 @@ div[data-testid="native-cta"] {
 /* "Also avaliable on iTunes Store" */
 .tracklist-footer__native-cta-wrapper {
 	display: none !important;
-}
-
-/* the floating buttons on the right upper corner */
-div[slot="secondary-actions"] {
-	position: fixed;
-	z-index: 2;
-	margin-right: 5px;
 }
 
 /* close button, translation/transliteration button on immersive mode */

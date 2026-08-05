@@ -6,7 +6,7 @@ import { h } from "jsx-dom";
 import { isClassical, shouldObserveChildMutations } from "./utils";
 import { DragRegion } from "./components/DragRegion";
 import { NavHeader } from "./components/NavHeader";
-import { proxyMusicKit } from "./proxy";
+import { noopSentry, proxyMusicKit } from "./proxy";
 
 const injectedElements = {
 	navigationHeader: false,
@@ -94,4 +94,5 @@ document.addEventListener("DOMContentLoaded", () => {
 	}
 });
 
+noopSentry();
 proxyMusicKit();

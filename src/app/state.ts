@@ -110,7 +110,8 @@ export class AppState {
 			width: 800,
 			height: 600,
 			autoHideMenuBar: true,
-			backgroundColor: "#1f1f1f",
+			title: getServiceName(this.currentService),
+			backgroundColor: nativeTheme.shouldUseDarkColors ? "#1f1f1f" : "#fff",
 			webPreferences: {
 				preload: fileURLToPath(new URL("./preload.cjs", import.meta.url)),
 				nodeIntegration: false,
@@ -210,6 +211,7 @@ export class AppState {
 			if (!this.isQuitting) {
 				event.preventDefault();
 				this.mainWindow?.hide();
+				buildTrayMenu(this);
 				return false;
 			} else {
 				if (this.mainWindow) {
