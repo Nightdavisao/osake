@@ -242,6 +242,7 @@ export class AppState {
 					`${metadata.name} - ${metadata.artistName} — ${getServiceName(this.currentService)}`,
 				);
 			}
+			buildTrayMenu(this);
 		});
 
 		this.playerSink?.on("playbackState", ({ state: playbackState }) => {
