@@ -7,13 +7,13 @@ import forwardIconSvg from "~/extra/svg/forward.svg";
 const iconButtonStyle = {
 	width: "15px",
 	height: "15px",
-	color: "var(--navigation-item-text-color), var(--systemPrimary)",
 };
 
 export function NavHeader() {
 	return (
 		<div
 			style={{
+				color: "var(--navigation-item-text-color), var(--systemPrimary)",
 				zIndex: "5",
 				alignItems: "center",
 				marginTop: "4px",

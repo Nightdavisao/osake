@@ -126,6 +126,7 @@ export class MPRISService extends EventEmitter {
 	}
 
 	setVolume(volume: number) {
+		volume = Number(volume.toFixed(2));
 		this.logger.debug("setting volume:", volume);
 		if (this.initialized && this.playerInterface)
 			this.playerInterface.Volume = volume;
