@@ -17,6 +17,7 @@ export class MPRISIntegration implements PlayerIntegration {
 	isLoaded: boolean = false;
 
 	state: AppState;
+	volumeGracePeriod: number = Date.now();
 	logger: Logger;
 	player: PlayerSink;
 	mpris: MPRISService;
@@ -108,6 +109,12 @@ export class MPRISIntegration implements PlayerIntegration {
 		this.mpris.on("rate", rate => {
 			this.player.playbackRate = rate;
 		});
+		this.mpris.on("volume", volume => {
+			if (Date.now() > this.volumeGracePeriod) {
+				this.volumeGracePeriod = Date.now() + 0.2;
+				this.player.volume = volume;
+			}
+		});
 
 		this.player.on("nowPlaying", async (metadata: TrackMetadata) => {
 			if (Object.keys(metadata).length === 0) {
@@ -168,6 +175,7 @@ export class MPRISIntegration implements PlayerIntegration {
 		);
 		this.player.on("shuffle", ({ mode }) => this.mpris.setShuffle(mode));
 		this.player.on("rate", rate => this.mpris.setRate(rate));
+		this.player.on("volume", volume => this.mpris.setVolume(volume));
 
 		this.player.on("repeat", ({ mode }) => {
 			switch (mode) {

@@ -9,7 +9,8 @@ export class PlayerSink extends EventEmitter {
 	webContents: Electron.WebContents;
 	logger: Logger;
 	metadata: TrackMetadata | null;
-	_playbackRate: number;
+	private _playbackRate: number;
+	private _volume: number;
 	playbackState: MKPlaybackState;
 	playbackTime: number;
 	shuffleMode: boolean;
@@ -30,6 +31,7 @@ export class PlayerSink extends EventEmitter {
 			"shuffle",
 			"repeat",
 			"rate",
+			"volume",
 		];
 
 		this.metadata = null;
@@ -38,6 +40,7 @@ export class PlayerSink extends EventEmitter {
 		this._playbackRate = 1;
 		this.repeatMode = MKRepeatMode.None;
 		this.shuffleMode = false;
+		this._volume = 1;
 
 		this.integrations = new Map();
 	}
@@ -49,6 +52,15 @@ export class PlayerSink extends EventEmitter {
 	set playbackRate(value) {
 		this.dispatch("rate", value);
 		this._playbackRate = value;
+	}
+
+	get volume() {
+		return this._volume;
+	}
+
+	set volume(value) {
+		this.dispatch("volume", value);
+		this._volume = value;
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -126,6 +138,8 @@ export class PlayerSink extends EventEmitter {
 			"repeat",
 			(data: { mode: MKRepeatMode }) => (this.repeatMode = data.mode),
 		);
+		this.on("volume", volume => (this._volume = volume));
+		this.on("rate", rate => (this._playbackRate = rate));
 
 		const integrationsToLoad = Promise.all(this.integrations.values());
 

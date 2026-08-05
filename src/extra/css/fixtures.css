@@ -21,7 +21,8 @@ div[slot="secondary-actions"] {
 	margin-right: 5px;
 }
 
-/* translation/transliteration button on immersive mode */
-.lyrics-translation-menu {
+/* close button, translation/transliteration button on immersive mode */
+.lyrics-translation-menu,
+button[data-testid="lyrics-fullscreen-modal-close-button"] {
 	margin-top: env(titlebar-area-height, 0);
 }
