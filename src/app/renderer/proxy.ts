@@ -53,3 +53,17 @@ export function proxyMusicKit() {
 		},
 	});
 }
+
+export function noopSentry() {
+	console.log("nooping sentry");
+
+	Object.defineProperty(window, "__SENTRY__", {
+		configurable: false,
+		get() {
+			return null;
+		},
+		set() {
+			Reflect.deleteProperty(window, "__SENTRY__");
+		},
+	});
+}
