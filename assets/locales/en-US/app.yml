@@ -3,6 +3,7 @@ playback:
   next: "&Next"
   previous: "&Previous"
   shuffle: "&Shuffle"
+  playbackRate: "Playback rate"
   repeat:
     label: "&Repeat"
     one: "&Track"
@@ -13,6 +14,13 @@ menu:
   integrations:
     discord:
       label: "Discord presence"
+  options:
+    label: "Options"
+    theme:
+      label: "App theme"
+      system: "System default"
+      light: "Light"
+      dark: "Dark"
   misc:
     reload: "&Reload"
     minimize: "&Minimize to tray"

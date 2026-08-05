@@ -1,10 +1,11 @@
 import fs from "node:fs/promises";
 import { file } from "tmp-promise";
-import { TrackMetadata } from "~/@types/interfaces";
+import { TrackMetadata } from "~/types/interfaces";
 import { AppConfig } from "~/config";
 
 export const AM_BASE_URL = "https://beta.music.apple.com";
 export const AM_CLASSICAL_BASE_URL = "https://classical.music.apple.com";
+export const PODCASTS_BASE_URL = "https://podcasts.apple.com";
 
 export const PLAYBACK_STATES = {
 	"0": "none",
@@ -65,9 +66,12 @@ export function sanitizeName(albumName: string) {
 export function getArtworkUrl(metadata: TrackMetadata) {
 	if (metadata.artwork) {
 		if (metadata.artwork.width && metadata.artwork.height) {
-			return metadata.artwork.url
-				.replace("{w}", metadata.artwork.width.toString())
-				.replace("{h}", metadata.artwork.height.toString());
+			const formattedUrl = metadata.artwork.url
+				.replace(/\{w\}/g, metadata.artwork.width.toString())
+				.replace(/\{h\}/g, metadata.artwork.height.toString())
+				.replace(/\{f\}/g, "jpg"); // podcasts
+
+			return formattedUrl;
 		}
 		return metadata.artwork.url;
 	}
@@ -116,20 +120,23 @@ export const secToMillis = (seconds: number) =>
 	Math.round(Number(seconds) * 1e3);
 export const millisToSec = (milliseconds: number) => Number(milliseconds) / 1e3;
 
-class CustomError extends Error {
+class OsakeError extends Error {
 	constructor(message: string, cause: Error) {
 		super(message);
 		this.cause = cause;
-		this.name = "CustomError";
+		this.name = "OsakeError";
 	}
 }
 
-export async function getAppleGeolocation(config: AppConfig): Promise<string> {
+export async function getAppleGeolocation(
+	config: AppConfig,
+	url: string,
+): Promise<string> {
 	const storefrontId = config.get("storefrontId");
 
 	if (!storefrontId) {
 		try {
-			const amResponse = await fetch(AM_BASE_URL);
+			const amResponse = await fetch(url);
 			const setCookieResponse = amResponse.headers.get("Set-Cookie");
 			if (setCookieResponse) {
 				const cookie = parseCookie(setCookieResponse);
@@ -141,7 +148,7 @@ export async function getAppleGeolocation(config: AppConfig): Promise<string> {
 				}
 			}
 		} catch (e) {
-			throw new CustomError(
+			throw new OsakeError(
 				"Unable to get geo cookie from Apple Music",
 				e as Error,
 			);
@@ -149,4 +156,24 @@ export async function getAppleGeolocation(config: AppConfig): Promise<string> {
 	}
 
 	return storefrontId;
+}
+
+export function truncateString(str: string, maxLength: number) {
+	return str.length > maxLength ? str.slice(0, maxLength) + "..." : str;
+}
+
+export function getFirstArtist(str: string, when: number = -1) {
+	const artists = str.split(/\s*&\s*/g);
+	if (when > 0 && artists.length > 1) {
+		if (str.length > when) {
+			return artists[0];
+		}
+		return truncateString(artists[0], when);
+	}
+
+	if (when > 0) {
+		return truncateString(str, when);
+	}
+
+	return str;
 }

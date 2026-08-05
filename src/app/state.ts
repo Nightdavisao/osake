@@ -1,21 +1,32 @@
-import { app, BrowserWindow, dialog, ipcMain, Tray } from "electron";
+import {
+	app,
+	BrowserWindow,
+	dialog,
+	ipcMain,
+	nativeTheme,
+	session,
+	shell,
+	Tray,
+} from "electron";
 import log4js, { Logger } from "log4js";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
-import { MKPlaybackState, WebsiteType } from "~/@types/enums";
-import { TrackMetadata } from "~/@types/interfaces";
+import { MKPlaybackState, WebsiteService } from "~/types/enums";
+import { TrackMetadata } from "~/types/interfaces";
 import { AppConfig } from "~/config";
 import { DiscordIntegration } from "~/integration/discord";
 import { MPRISIntegration } from "~/integration/mpris";
 import { PlayerSink } from "~/player";
+
 import {
 	AM_BASE_URL,
 	AM_CLASSICAL_BASE_URL,
 	getAppleGeolocation,
+	PODCASTS_BASE_URL,
 } from "~/utils";
 import { interceptFetchResponse } from "./intercept";
 import { buildTrayMenu, openAppMenu, setupTray } from "./menu";
-import { DEFAULT_WINDOW_TITLE, getIconFilenames } from "./utils";
+import { getServiceIconFilenames, getServiceName } from "./utils";
 import {
 	AppLocale,
 	AppLocaleFactory,
@@ -31,7 +42,7 @@ export class AppState {
 	localeFactory: AppLocaleFactory;
 	locale: AppLocale = new DumbLocaleTFallback();
 	mainWindow: BrowserWindow | null = null;
-	currentWebsite: WebsiteType = "music";
+	currentService: WebsiteService = "music";
 	playerSink: PlayerSink | null = null;
 	config: AppConfig;
 	tray: Tray | null = null;
@@ -72,38 +83,59 @@ export class AppState {
 		}
 	}
 
+	getTitleBarOverlayOptions() {
+		return nativeTheme.shouldUseDarkColors ?
+				{
+					symbolColor: "#fff",
+					color: "#1f1f1f",
+				}
+			:	{
+					color: "#fff",
+					symbolColor: "#1f1f1f",
+				};
+	}
+
 	async startup() {
 		this.ensureSingleInstance();
-		this.locale = await this.localeFactory.getT();
+		const themeOverride = this.config.get("themeOverride");
+		if (["light", "dark"].includes(themeOverride as string)) {
+			nativeTheme.themeSource = themeOverride;
+		}
 
-		this.currentWebsite = this.config.get("currentWebsite");
-		this.logger.info("current website is " + this.currentWebsite);
+		this.locale = await this.localeFactory.getT();
+		this.currentService = this.config.get("currentWebsite");
+		this.logger.info("current service is " + this.currentService);
 		const options: Electron.BrowserWindowConstructorOptions = {
-			icon: getIconFilenames(this.config.get("currentWebsite")).trayPng,
+			icon: getServiceIconFilenames(this.config.get("currentWebsite")).trayPng,
 			width: 800,
 			height: 600,
 			autoHideMenuBar: true,
-			backgroundColor: "#1f1f1f",
+			title: getServiceName(this.currentService),
+			backgroundColor: nativeTheme.shouldUseDarkColors ? "#1f1f1f" : "#fff",
 			webPreferences: {
 				preload: fileURLToPath(new URL("./preload.cjs", import.meta.url)),
 				nodeIntegration: false,
 			},
-			...(this.currentWebsite === "music" ?
-				{ titleBarStyle: "hidden" }
-			:	{ titleBarStyle: "default" }),
-			...(this.currentWebsite === "music" ?
-				{
-					titleBarOverlay: {
-						symbolColor: "#fff",
-						color: "#1f1f1f",
-					},
-				}
-			:	{}),
+			titleBarStyle: "hidden",
+			titleBarOverlay: this.getTitleBarOverlayOptions(),
 		};
 		Object.assign(options, this.config.get("winBounds"));
 
 		this.mainWindow = new BrowserWindow(options);
 		this.playerSink = new PlayerSink(ipcMain, this.mainWindow.webContents);
+		session.defaultSession.webRequest.onBeforeRequest(
+			{
+				urls: [
+					"*://*.apple.com/assets/mt-metricskit*",
+					"*://*.apple.com/static-commerce/js*",
+				],
+			},
+			(details, callback) => {
+				this.logger.debug("will block metrics url", details.url);
+				callback({ cancel: true });
+			},
+		);
+
 		const promises = [
 			this.checkIntegrations(),
 			this.playerSink.initialize(),
@@ -124,12 +156,20 @@ export class AppState {
 			app.exit(1);
 		}
 
-		const currentWebsiteURL =
-			this.config.get("currentWebsite") === "music" ?
-				AM_BASE_URL
-			:	AM_CLASSICAL_BASE_URL;
+		let currentWebsiteURL = AM_BASE_URL;
+		switch (this.config.get("currentWebsite") as WebsiteService) {
+			case "classical":
+				currentWebsiteURL = AM_CLASSICAL_BASE_URL;
+				break;
+			case "podcasts":
+				currentWebsiteURL = PODCASTS_BASE_URL;
+				break;
+			default:
+				currentWebsiteURL = AM_BASE_URL;
+				break;
+		}
 
-		const geo = await getAppleGeolocation(this.config);
+		const geo = await getAppleGeolocation(this.config, currentWebsiteURL);
 
 		let amUrl = currentWebsiteURL;
 		if (geo && typeof geo === "string") {
@@ -138,8 +178,18 @@ export class AppState {
 		this.mainWindow.loadURL(amUrl);
 	}
 
-	private setupWindowEventListeners() {
+	private async setupWindowEventListeners() {
 		ipcMain.handle("openAppMenu", event => openAppMenu(this, event));
+
+		nativeTheme.on("updated", () => {
+			this.mainWindow?.setTitleBarOverlay(this.getTitleBarOverlayOptions());
+
+			if (nativeTheme.themeSource !== "system") {
+				this.config.set("themeOverride", nativeTheme.themeSource);
+			} else {
+				this.config.delete("themeOverride");
+			}
+		});
 
 		app.on("second-instance", () => {
 			if (this.mainWindow) {
@@ -161,6 +211,7 @@ export class AppState {
 			if (!this.isQuitting) {
 				event.preventDefault();
 				this.mainWindow?.hide();
+				buildTrayMenu(this);
 				return false;
 			} else {
 				if (this.mainWindow) {
@@ -178,7 +229,8 @@ export class AppState {
 			}
 		});
 
-		this.mainWindow?.webContents.setWindowOpenHandler(() => {
+		this.mainWindow?.webContents.setWindowOpenHandler(details => {
+			shell.openExternal(details.url);
 			return { action: "deny" };
 		});
 	}
@@ -187,7 +239,7 @@ export class AppState {
 		this.playerSink?.on("nowPlaying", (metadata: TrackMetadata) => {
 			if (metadata) {
 				this.mainWindow?.setTitle(
-					`${metadata.name} - ${metadata.artistName} — ${DEFAULT_WINDOW_TITLE}`,
+					`${metadata.name} - ${metadata.artistName} — ${getServiceName(this.currentService)}`,
 				);
 			}
 		});
@@ -198,26 +250,29 @@ export class AppState {
 					case MKPlaybackState.Paused:
 					case MKPlaybackState.Playing:
 						this.mainWindow?.setTitle(
-							`${this.playerSink?.metadata?.name} - ${this.playerSink?.metadata?.artistName} — ${DEFAULT_WINDOW_TITLE}`,
+							`${this.playerSink?.metadata?.name} - ${this.playerSink?.metadata?.artistName} — ${getServiceName(this.currentService)}`,
 						);
 						break;
 					default:
-						this.mainWindow?.setTitle(DEFAULT_WINDOW_TITLE);
+						this.mainWindow?.setTitle(getServiceName(this.currentService));
 						break;
 				}
 			} else {
-				this.mainWindow?.setTitle(DEFAULT_WINDOW_TITLE);
+				this.mainWindow?.setTitle(getServiceName(this.currentService));
 			}
 			buildTrayMenu(this);
 		});
 
 		this.playerSink?.on("shuffle", () => buildTrayMenu(this));
 		this.playerSink?.on("repeat", () => buildTrayMenu(this));
+		this.playerSink?.on("rate", () => buildTrayMenu(this));
 	}
 
 	checkIntegrations() {
 		if (this.config?.get("enableMPRIS") && currentPlatform === "linux") {
-			this.playerSink?.addIntegration(new MPRISIntegration(this.playerSink));
+			this.playerSink?.addIntegration(
+				new MPRISIntegration(this, this.playerSink),
+			);
 		}
 
 		if (this.config?.get("enableDiscordRPC")) {
@@ -225,12 +280,39 @@ export class AppState {
 		}
 	}
 
-	switchWebsite(type: WebsiteType) {
-		if (this.currentWebsite === type) return;
+	switchService(type: WebsiteService) {
+		if (this.currentService === type) return;
 
 		this.config?.set("currentWebsite", type);
 		app.relaunch();
 		app.exit(0);
+	}
+
+	getAllowedPlaybackOptions(): {
+		shuffle: boolean;
+		repeat: boolean;
+		rateSpeed: boolean;
+	} {
+		switch (this.currentService) {
+			case "podcasts":
+				return {
+					shuffle: false,
+					repeat: false,
+					rateSpeed: true,
+				};
+			case "classical":
+				return {
+					shuffle: false,
+					repeat: true,
+					rateSpeed: false,
+				};
+			default:
+				return {
+					shuffle: true,
+					repeat: true,
+					rateSpeed: false,
+				};
+		}
 	}
 
 	toggleWindow() {

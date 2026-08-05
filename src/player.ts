@@ -1,14 +1,16 @@
 import { IpcMain, IpcMainEvent } from "electron";
 import log4js, { Logger } from "log4js";
 import { EventEmitter } from "node:events";
-import { MKPlaybackState, MKRepeatMode } from "~/@types/enums";
-import { PlayerIntegration, TrackMetadata } from "~/@types/interfaces";
+import { MKPlaybackState, MKRepeatMode } from "~/types/enums";
+import { PlayerIntegration, TrackMetadata } from "~/types/interfaces";
 
 export class PlayerSink extends EventEmitter {
 	ipcMain: IpcMain;
 	webContents: Electron.WebContents;
 	logger: Logger;
 	metadata: TrackMetadata | null;
+	private _playbackRate: number;
+	private _volume: number;
 	playbackState: MKPlaybackState;
 	playbackTime: number;
 	shuffleMode: boolean;
@@ -28,62 +30,84 @@ export class PlayerSink extends EventEmitter {
 			"playbackTime",
 			"shuffle",
 			"repeat",
+			"rate",
+			"volume",
 		];
 
 		this.metadata = null;
 		this.playbackState = MKPlaybackState.Stopped;
 		this.playbackTime = 0;
+		this._playbackRate = 1;
 		this.repeatMode = MKRepeatMode.None;
 		this.shuffleMode = false;
+		this._volume = 1;
 
 		this.integrations = new Map();
 	}
 
+	get playbackRate() {
+		return this._playbackRate;
+	}
+
+	set playbackRate(value) {
+		this.dispatch("rate", value);
+		this._playbackRate = value;
+	}
+
+	get volume() {
+		return this._volume;
+	}
+
+	set volume(value) {
+		this.dispatch("volume", value);
+		this._volume = value;
+	}
+
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	dispatchIpcMessage(channel: string, data: any = null) {
+	dispatch(channel: string, data: any = null) {
 		this.webContents.send(channel, data);
 	}
 
 	playPause() {
-		this.dispatchIpcMessage("playpause");
+		this.dispatch("playpause");
 	}
 
 	play() {
-		this.dispatchIpcMessage("playbackState", { state: "playing" });
+		this.dispatch("playbackState", { state: "playing" });
 	}
 
 	pause() {
-		this.dispatchIpcMessage("playbackState", { state: "paused" });
+		this.dispatch("playbackState", { state: "paused" });
 	}
 
 	stop() {
-		this.dispatchIpcMessage("playbackState", { state: "stopped" });
+		this.dispatch("playbackState", { state: "stopped" });
 	}
 
 	next() {
-		this.dispatchIpcMessage("nextTrack");
+		this.dispatch("nextTrack");
 	}
 
 	previous() {
-		this.dispatchIpcMessage("previousTrack");
+		this.dispatch("previousTrack");
 	}
 
 	setShuffle(mode: boolean) {
 		if (typeof mode !== "boolean" || this.shuffleMode === mode) return;
 
 		this.logger.debug("setShuffle", mode);
-		this.dispatchIpcMessage("shuffle", { mode });
+		this.dispatch("shuffle", { mode });
 	}
 
 	setRepeat(mode: MKRepeatMode) {
 		if (typeof mode !== "string" || this.repeatMode === mode) return;
 
 		this.logger.debug("setRepeat", mode);
-		this.dispatchIpcMessage("repeat", { mode });
+		this.dispatch("repeat", { mode });
 	}
 
 	seek(time: number) {
-		this.dispatchIpcMessage("playbackTime", { progress: time });
+		this.dispatch("playbackTime", { progress: time });
 	}
 
 	initialize() {
@@ -100,8 +124,7 @@ export class PlayerSink extends EventEmitter {
 		});
 		this.on(
 			"playbackState",
-			(data: { state: MKPlaybackState }) =>
-				(this.playbackState = data.state),
+			(data: { state: MKPlaybackState }) => (this.playbackState = data.state),
 		);
 		this.on(
 			"playbackTime",
@@ -115,6 +138,8 @@ export class PlayerSink extends EventEmitter {
 			"repeat",
 			(data: { mode: MKRepeatMode }) => (this.repeatMode = data.mode),
 		);
+		this.on("volume", volume => (this._volume = volume));
+		this.on("rate", rate => (this._playbackRate = rate));
 
 		const integrationsToLoad = Promise.all(this.integrations.values());
 
@@ -159,5 +184,18 @@ export class PlayerSink extends EventEmitter {
 		const integration = this.integrations.get(shortName);
 		this.logger.debug(`disabling integration ${shortName}`);
 		await integration?.unload();
+	}
+
+	async toggleIntegration(shortName: string) {
+		const integration = this.integrations.get(shortName);
+		this.logger.debug(
+			`toggling integration ${shortName}`,
+			integration?.isLoaded,
+		);
+		if (integration) {
+			return integration.isLoaded ?
+					this.disableIntegration(shortName)
+				:	this.enableIntegration(shortName);
+		}
 	}
 }

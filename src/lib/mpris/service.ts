@@ -1,5 +1,4 @@
 import dbus from "dbus-next";
-import { app } from "electron";
 import { EventEmitter } from "events";
 import log4js, { Logger } from "log4js";
 import { LoopStatus, PlaybackStatus } from "./enums";
@@ -7,18 +6,21 @@ import {
 	MediaPlayer2Interface,
 	MediaPlayer2PlayerInterface,
 } from "./interface";
+import { MPRISServiceOptions } from "~/types/enums";
 
 export class MPRISService extends EventEmitter {
+	options: MPRISServiceOptions;
 	logger: Logger;
 	initialized: boolean;
 	bus: dbus.MessageBus | null;
 	interface: MediaPlayer2Interface | null;
 	playerInterface: MediaPlayer2PlayerInterface | null;
-	constructor() {
+	constructor(options: MPRISServiceOptions) {
 		super();
 		this.logger = log4js.getLogger("mpris");
 		this.logger.level = "debug";
 
+		this.options = options;
 		this.initialized = false;
 		this.bus = null;
 		this.interface = null;
@@ -38,7 +40,7 @@ export class MPRISService extends EventEmitter {
 		this.bus.export("/org/mpris/MediaPlayer2", this.playerInterface);
 
 		const returnCode = await this.bus.requestName(
-			`org.mpris.MediaPlayer2.${app.name}`,
+			`org.mpris.MediaPlayer2.${this.options.busNameSuffix}`,
 			dbus.NameFlag.DO_NOT_QUEUE,
 		);
 		this.logger.debug("return code:", returnCode);
@@ -115,5 +117,17 @@ export class MPRISService extends EventEmitter {
 		this.logger.debug("setting shuffle:", shuffle);
 		if (this.initialized && this.playerInterface)
 			this.playerInterface.Shuffle = shuffle;
+	}
+
+	setRate(rate: number) {
+		this.logger.debug("setting rate:", rate);
+		if (this.initialized && this.playerInterface)
+			this.playerInterface.Rate = rate;
+	}
+
+	setVolume(volume: number) {
+		this.logger.debug("setting volume:", volume);
+		if (this.initialized && this.playerInterface)
+			this.playerInterface.Volume = volume;
 	}
 }

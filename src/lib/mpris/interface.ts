@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import dbus from "dbus-next";
-import { app } from "electron";
 import { MPRISService } from "./service";
 
 export class MediaPlayer2Interface extends dbus.interface.Interface {
@@ -24,8 +23,8 @@ export class MediaPlayer2Interface extends dbus.interface.Interface {
 		this._fullscreen = false;
 		this._canSetFullscreen = false;
 		this._hasTrackList = false;
-		this._identity = "Apple Music";
-		this._desktopEntry = app.name;
+		this._identity = service.options.identity;
+		this._desktopEntry = service.options.desktopEntry;
 		this._supportedUriSchemes = [];
 		this._supportedMimeTypes = [];
 
@@ -130,8 +129,8 @@ export class MediaPlayer2PlayerInterface extends dbus.interface.Interface {
 		this._metadata = {};
 		this._volume = 1;
 		this._position = 0;
-		this._minimumRate = 1;
-		this._maximumRate = 1;
+		this._minimumRate = service.options.player.minimumRate;
+		this._maximumRate = service.options.player.maximumRate;
 		this._canGoNext = true;
 		this._canGoPrevious = true;
 		this._canPlay = true;
@@ -139,24 +138,33 @@ export class MediaPlayer2PlayerInterface extends dbus.interface.Interface {
 		this._canSeek = true;
 		this._canControl = true;
 
+		const properties: Record<string, any> = {
+			PlaybackStatus: { signature: "s", access: "read" },
+			Rate: { signature: "d", access: "readwrite" },
+			Metadata: { signature: "a{sv}", access: "read" },
+			Volume: { signature: "d", access: "readwrite" },
+			Position: { signature: "x", access: "read" },
+			MinimumRate: { signature: "d", access: "read" },
+			MaximumRate: { signature: "d", access: "read" },
+			CanGoNext: { signature: "b", access: "read" },
+			CanGoPrevious: { signature: "b", access: "read" },
+			CanPlay: { signature: "b", access: "read" },
+			CanPause: { signature: "b", access: "read" },
+			CanSeek: { signature: "b", access: "read" },
+			CanControl: { signature: "b", access: "read" },
+		};
+
+		if (service.options.player.supportsLoop) {
+			this._loopStatus = "None";
+			properties.LoopStatus = { signature: "s", access: "readwrite" };
+		}
+		if (service.options.player.supportsShuffle) {
+			this._shuffle = false;
+			properties.Shuffle = { signature: "b", access: "readwrite" };
+		}
+
 		MediaPlayer2PlayerInterface.configureMembers({
-			properties: {
-				PlaybackStatus: { signature: "s", access: "read" },
-				LoopStatus: { signature: "s", access: "readwrite" },
-				Rate: { signature: "d", access: "readwrite" },
-				Shuffle: { signature: "b", access: "readwrite" },
-				Metadata: { signature: "a{sv}", access: "read" },
-				Volume: { signature: "d", access: "readwrite" },
-				Position: { signature: "x", access: "read" },
-				MinimumRate: { signature: "d", access: "read" },
-				MaximumRate: { signature: "d", access: "read" },
-				CanGoNext: { signature: "b", access: "read" },
-				CanGoPrevious: { signature: "b", access: "read" },
-				CanPlay: { signature: "b", access: "read" },
-				CanPause: { signature: "b", access: "read" },
-				CanSeek: { signature: "b", access: "read" },
-				CanControl: { signature: "b", access: "read" },
-			},
+			properties,
 			methods: {
 				Next: { inSignature: "", outSignature: "" },
 				Previous: { inSignature: "", outSignature: "" },
@@ -203,6 +211,12 @@ export class MediaPlayer2PlayerInterface extends dbus.interface.Interface {
 		return this._rate;
 	}
 	set Rate(value: number) {
+		this.service.emit("rate", value);
+		MediaPlayer2PlayerInterface.emitPropertiesChanged(
+			this,
+			{ Rate: value },
+			[],
+		);
 		this._rate = value;
 	}
 
@@ -235,6 +249,12 @@ export class MediaPlayer2PlayerInterface extends dbus.interface.Interface {
 		return this._volume;
 	}
 	set Volume(value: number) {
+		this.service.emit("volume", value);
+		MediaPlayer2PlayerInterface.emitPropertiesChanged(
+			this,
+			{ Volume: value },
+			[],
+		);
 		this._volume = value;
 	}
 

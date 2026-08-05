@@ -1,5 +1,6 @@
 export interface PlayerIntegration {
 	shortName: string;
+	isLoaded: boolean;
 	load(): Promise<void> | void;
 	unload(): Promise<void> | void;
 }

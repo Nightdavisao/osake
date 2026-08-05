@@ -9,3 +9,5 @@ common:
       label: "Music"
     classical:
       label: "Classical"
+    podcasts:
+      label: "Podcasts"

@@ -1,6 +1,6 @@
 import log4js, { Logger } from "log4js";
-import { MKPlaybackState, WebsiteType } from "~/@types/enums";
-import { PlayerIntegration } from "~/@types/interfaces";
+import { MKPlaybackState, WebsiteService } from "~/types/enums";
+import { PlayerIntegration } from "~/types/interfaces";
 import {
 	LastFmApiErrorCode,
 	LastFMClient,
@@ -12,6 +12,7 @@ import { millisToSec, sanitizeName } from "~/utils";
 
 export class LastFMIntegration implements PlayerIntegration {
 	shortName: string = "lastfm";
+	isLoaded: boolean = false;
 
 	logger: Logger;
 	player: PlayerSink;
@@ -32,11 +33,11 @@ export class LastFMIntegration implements PlayerIntegration {
 	didFail: boolean;
 	threadLocked: boolean;
 	lastPlayingStatusTimestamp: Date | null;
-	activeWebsite: WebsiteType;
+	activeWebsite: WebsiteService;
 	isClassical: boolean;
 	constructor(
 		player: PlayerSink,
-		activeWebsite: WebsiteType,
+		activeWebsite: WebsiteService,
 		client: LastFMClient,
 	) {
 		this.logger = log4js.getLogger("lastfmIntegration");
@@ -234,9 +235,11 @@ export class LastFMIntegration implements PlayerIntegration {
 		});
 
 		this.isInitialized = true;
+		this.isLoaded = true;
 	}
 	unload(): Promise<void> | void {
-		this.scrobbleAllowed = false; // doesn't actually "unload" per se, i need to rethink about these modular integrations.
+		this.scrobbleAllowed = false;
+		this.isLoaded = false;
 		// this.scrubbler = null
 	}
 }
