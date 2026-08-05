@@ -9,7 +9,6 @@ Unofficial Electron wrapper for Apple Music, Music Classical and Podcasts with s
 - Linux **MPRIS** support
 - Discord presence
 - Tray menu with quick playback + visibility controls
--
 
 ## Download
 
