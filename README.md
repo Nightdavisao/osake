@@ -1,16 +1,15 @@
 # Osake 「お酒」
 
-Unofficial Electron wrapper for Apple Music (and Apple Music Classical) with some quality‑of‑life desktop integrations.
+Unofficial Electron wrapper for Apple Music, Music Classical and Podcasts with some quality‑of‑life fixes and desktop integrations.
 
 > Not affiliated with or endorsed by Apple Inc. Use at your own risk.
 
 ## Features
 
 - Linux **MPRIS** support
-- Discord Rich Presence
-- ~~Last.fm scrobbling~~
-- Switch between **Apple Music** and **Apple Music Classical** (Note: Classical is not 100% okay just yet)
+- Discord presence
 - Tray menu with quick playback + visibility controls
+-
 
 ## Download
 
