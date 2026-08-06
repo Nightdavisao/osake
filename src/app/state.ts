@@ -1,8 +1,10 @@
 import {
 	app,
 	BrowserWindow,
+	clipboard,
 	dialog,
 	ipcMain,
+	Menu,
 	nativeTheme,
 	session,
 	shell,
@@ -232,6 +234,18 @@ export class AppState {
 		this.mainWindow?.webContents.setWindowOpenHandler(details => {
 			shell.openExternal(details.url);
 			return { action: "deny" };
+		});
+
+		this.mainWindow?.webContents.on("context-menu", (event, params) => {
+			if (params.linkURL) {
+				const menu = Menu.buildFromTemplate([
+					{
+						label: this.locale.t("common.copyURL"),
+						click: () => clipboard.write({ text: params.linkURL }),
+					},
+				]);
+				menu.popup();
+			}
 		});
 	}
 
