@@ -1,5 +1,6 @@
 common:
   none: "Nenhum"
+  copyURL: "Copiar link URL"
   notPlaying: "Nenhuma música tocando"
   integrations: "Integrações"
   show: "Mostrar"
