@@ -20,12 +20,6 @@ const PATCHES = [
 		find: /setTimeout\s*\(\s*\(\)\s*=>\s*(document\.dispatchEvent\([A-Za-z]\))\)/,
 		replace: "$1",
 	},
-	{
-		name: "Invalidate stale preloaded next track on queue changes",
-		find: /([a-z])\.queue\.isInitiated\s*\?\s*[a-z]\.queue\.isEmpty\s*\|\|\s*\(yield\s*e\.queueAutoplayTracks\(\),\s*[a-z]\.prepareToPlayNextItem\(\)\)\s*:\s*\([a-z]\.stopAutoplay\(\),\s*[a-z]\.startAutoplay\(\)\)/,
-		replace:
-			"!$1.queue.isInitiated?$1.queue.isEmpty||($1._mediaItemPlayback.clearNextManifest(),yield e.prepareToPlayNextItem(),yield $1.queueAutoplayTracks()):($1.stopAutoplay(),$1.startAutoplay())",
-	},
 ];
 
 function getSurroundingCode(
