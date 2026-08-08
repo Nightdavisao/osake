@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SHA: ${GITHUB_SHA::7}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
