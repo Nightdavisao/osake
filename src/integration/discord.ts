@@ -55,10 +55,10 @@ export class DiscordIntegration implements PlayerIntegration {
 			this.logger.info("discord RPC ready");
 		});
 
-		this.playerSink?.on(
-			"nowPlaying",
-			async (metadata: TrackMetadata) => await this.setActivity(metadata),
-		);
+		this.playerSink?.on("nowPlaying", async (metadata: TrackMetadata) => {
+			await this.client.user?.clearActivity();
+			await this.setActivity(metadata);
+		});
 		this.playerSink?.on("playbackState", async ({ state }) => {
 			switch (state) {
 				case MKPlaybackState.Playing:
