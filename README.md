@@ -1,6 +1,6 @@
 # Osake 「お酒」
 
-Unofficial Electron wrapper for Apple Music, Music Classical and Podcasts with some quality‑of‑life fixes and desktop integrations.
+Unofficial Electron wrapper for Apple Music, Classical and Podcasts with some quality‑of‑life fixes and desktop integrations.
 
 > Not affiliated with or endorsed by Apple Inc. Use at your own risk.
 

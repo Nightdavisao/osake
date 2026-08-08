@@ -1,8 +1,8 @@
 {
 	"name": "osake",
 	"desktopName": "Osake",
-	"version": "1.0.0",
-	"description": "Unofficial Apple Music web Electron wrapper",
+	"version": "1.1.0",
+	"description": "Unofficial Electron wrapper for Apple Music, Classical and Podcasts",
 	"main": "dist/main.js",
 	"scripts": {
 		"start": "npx tsc -noEmit && node esbuild.ts && electron . --no-sandbox",
@@ -16,7 +16,9 @@
 			"output": "release"
 		},
 		"productName": "Osake",
-		"publish": null,
+		"publish": [
+			"github"
+		],
 		"icon": "assets/am-icon.png",
 		"appId": "io.github.nightdavisao.osake",
 		"linux": {
