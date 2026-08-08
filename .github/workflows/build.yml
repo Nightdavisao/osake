@@ -21,7 +21,7 @@ jobs:
         id: vars
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       - run: npm ci
-      - run: npm run app:dist -- --linux AppImage --publish
+      - run: npm run app:dist -- --linux AppImage --publish onTagOrDraft
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
